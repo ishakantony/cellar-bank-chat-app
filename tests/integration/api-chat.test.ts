@@ -10,3 +10,23 @@ describe("BANKING_TOOLS", () => {
     expect(toolNames).toContain("execute_transfer");
   });
 });
+
+import { POST as toolsPost } from "@/app/api/tools/route";
+
+describe("POST /api/tools", () => {
+  it("returns a transfer preview without executing it", async () => {
+    const request = new Request("http://localhost/api/tools", {
+      method: "POST",
+      body: JSON.stringify({
+        toolName: "create_transfer_preview",
+        input: { amount: 100, recipientName: "Ali" },
+      }),
+    });
+
+    const response = await toolsPost(request);
+    const json = await response.json();
+
+    expect(json.result.status).toBe("preview");
+    expect(json.result.executed).toBe(false);
+  });
+});
