@@ -1,19 +1,90 @@
+"use client";
+
+import type { Message } from "ai/react";
+import { useEffect, useRef } from "react";
 import { DEMO_ACCOUNT } from "@/lib/mock-data/account";
 import { SUGGESTED_PROMPTS } from "@/lib/chat/constants";
 import { AccountSummaryCard } from "@/components/chat/account-summary-card";
 import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { StructuredResult } from "@/components/chat/structured-result";
-import type { ChatMessage } from "@/lib/types/chat";
+import type { StructuredResult as StructuredResultType } from "@/lib/types/chat";
+
+function getStructuredResultsFromMessage(message: Message): StructuredResultType[] {
+  const toolInvocations = (message as any).toolInvocations as Array<{
+    toolName: string;
+    state: "call" | "result";
+    result?: any;
+  }> | undefined;
+
+  if (!toolInvocations) return [];
+
+  const results: StructuredResultType[] = [];
+
+  for (const invocation of toolInvocations) {
+    if (invocation.state !== "result") continue;
+    const result = invocation.result;
+    if (!result) continue;
+
+    switch (invocation.toolName) {
+      case "get_balance":
+        results.push({
+          type: "balance",
+          balance: result.balance,
+          currency: result.currency,
+        });
+        break;
+      case "list_recent_transactions":
+        results.push({
+          type: "transactions",
+          items: result.items,
+        });
+        break;
+      case "summarize_spending":
+        results.push({
+          type: "spending",
+          monthLabel: result.monthLabel,
+          total: result.total,
+          topCategory: result.topCategory,
+          comparisonText: result.comparisonText,
+        });
+        break;
+      case "execute_transfer":
+        results.push({
+          type: "status",
+          tone: "success",
+          summary: result.confirmationText,
+        });
+        break;
+      case "execute_card_status_change":
+        results.push({
+          type: "status",
+          tone: "success",
+          summary: result.confirmationText,
+        });
+        break;
+    }
+  }
+
+  return results;
+}
 
 export function ChatMessageList({
   messages,
   isLoading,
   onSelectPrompt,
 }: {
-  messages: ChatMessage[];
+  messages: Message[];
   isLoading?: boolean;
   onSelectPrompt: (prompt: string) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
   if (messages.length === 0) {
     const hour = new Date().getHours();
     const greeting =
@@ -45,55 +116,67 @@ export function ChatMessageList({
   }
 
   return (
-    <div className="flex flex-col justify-end space-y-4 px-4 py-6">
-      {messages.map((msg) => (
-        <div
-          key={msg.id}
-          className={`flex animate-message-in ${
-            msg.role === "user" ? "justify-end" : "justify-start"
-          }`}
-        >
+    <div ref={scrollRef} className="flex flex-col justify-end space-y-4 px-4 py-6">
+      {messages.map((msg) => {
+        const structuredResults = msg.role === "assistant" ? getStructuredResultsFromMessage(msg) : [];
+        const hasContent = msg.content && msg.content.trim().length > 0;
+
+        // Skip rendering empty assistant placeholder messages during streaming
+        if (msg.role === "assistant" && !hasContent && structuredResults.length === 0) {
+          return null;
+        }
+
+        return (
           <div
-            className={`max-w-[85%] px-4 py-3 text-[15px] leading-relaxed ${
-              msg.role === "user"
-                ? "rounded-2xl rounded-tr-sm bg-teal-600 text-white"
-                : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
+            key={msg.id}
+            className={`flex animate-message-in ${
+              msg.role === "user" ? "justify-end" : "justify-start"
             }`}
           >
-            {(() => {
-              const result = msg.structuredResult;
-              const isInfoStatus =
-                result && result.type === "status" && result.tone === "info";
-              const hasSummary =
-                result &&
-                (result.type === "status" || result.type === "action-preview");
-              const isDuplicate =
-                hasSummary && "summary" in result && msg.text === result.summary;
-              return isInfoStatus || !isDuplicate ? <p>{msg.text}</p> : null;
-            })()}
-            {msg.structuredResult && (
-              <div className="mt-3">
-                <StructuredResult data={msg.structuredResult} />
-              </div>
-            )}
+            <div
+              className={`max-w-[85%] px-4 py-3 text-[15px] leading-relaxed ${
+                msg.role === "user"
+                  ? "rounded-2xl rounded-tr-sm bg-teal-600 text-white"
+                  : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
+              }`}
+            >
+              {hasContent && <p>{msg.content}</p>}
+              {structuredResults.length > 0 && (
+                <div className="mt-3 space-y-3">
+                  {structuredResults.map((result, i) => (
+                    <StructuredResult key={i} data={result} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
-      {isLoading && (
-        <div className="flex animate-message-in justify-start">
-          <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated px-4 py-3 text-[15px] leading-relaxed text-neutral-100">
-            <span className="inline-flex items-center gap-1">
-              <span className="animate-thinking-pulse">Thinking</span>
-              <span className="inline-flex">
-                <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "0ms" }}>.</span>
-                <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "150ms" }}>.</span>
-                <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "300ms" }}>.</span>
+      {(() => {
+        if (!isLoading) return null;
+        const lastMsg = messages[messages.length - 1];
+        const isThinking =
+          lastMsg?.role === "user" ||
+          (lastMsg?.role === "assistant" &&
+            !lastMsg.content?.trim() &&
+            getStructuredResultsFromMessage(lastMsg).length === 0);
+        if (!isThinking) return null;
+        return (
+          <div className="flex animate-message-in justify-start">
+            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated px-4 py-3 text-[15px] leading-relaxed text-neutral-100">
+              <span className="inline-flex items-center gap-1">
+                <span className="animate-thinking-pulse">Thinking</span>
+                <span className="inline-flex">
+                  <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "0ms" }}>.</span>
+                  <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "150ms" }}>.</span>
+                  <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "300ms" }}>.</span>
+                </span>
               </span>
-            </span>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

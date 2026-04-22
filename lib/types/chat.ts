@@ -12,13 +12,6 @@ export type StructuredResult =
   | { type: "action-preview"; actionId: string; actionType: "transfer" | "freeze-card" | "unfreeze-card"; summary: string; confirmLabel: string; cancelLabel: string }
   | { type: "status"; tone: "success" | "error" | "info"; summary: string };
 
-export type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  structuredResult?: StructuredResult;
-};
-
 export type PendingAction =
   | {
       id: string;
@@ -35,9 +28,3 @@ export type PendingAction =
       cardLabel: string;
       previewText: string;
     };
-
-export type ConversationState = {
-  messages: ChatMessage[];
-  pendingAction: PendingAction | null;
-  isLoading: boolean;
-};

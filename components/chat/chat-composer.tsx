@@ -1,23 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { type ChangeEvent, type FormEvent } from "react";
 
 export function ChatComposer({
-  onSend,
+  input,
+  handleInputChange,
+  handleSubmit,
   disabled,
 }: {
-  onSend: (text: string) => void;
+  input: string;
+  handleInputChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   disabled: boolean;
 }) {
-  const [text, setText] = useState("");
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!text.trim() || disabled) return;
-    onSend(text.trim());
-    setText("");
-  }
-
   return (
     <form
       onSubmit={handleSubmit}
@@ -26,15 +21,16 @@ export function ChatComposer({
       <div className="flex items-center gap-2 rounded-3xl border border-white/10 bg-chat-surface px-4 py-3 transition-colors focus-within:border-teal-500/40">
         <input
           type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          name="prompt"
+          value={input}
+          onChange={handleInputChange}
           placeholder="Ask about your money..."
           disabled={disabled}
           className="min-h-[24px] flex-1 bg-transparent text-[16px] text-white placeholder:text-neutral-500 focus:outline-none"
         />
         <button
           type="submit"
-          disabled={disabled || !text.trim()}
+          disabled={disabled || !input.trim()}
           aria-label="Send"
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:opacity-30 disabled:hover:bg-teal-600"
         >

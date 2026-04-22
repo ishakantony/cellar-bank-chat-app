@@ -10,8 +10,7 @@
    - LM Studio: `http://localhost:1234/v1`
    - Ollama: `http://localhost:11434/v1`
 5. *(Optional)* Set `OPENAI_MODEL` (defaults to `gpt-4o-mini`)
-6. *(Optional)* Set `USE_LLM_FOR_ALL=true` to route every message through the LLM with tool execution (recommended for local models)
-7. Run `npm run dev`
+6. Run `npm run dev`
 
 ## Using LM Studio (Local Models)
 
@@ -23,13 +22,11 @@
    OPENAI_BASE_URL=http://localhost:1234/v1
    OPENAI_API_KEY=lm-studio
    OPENAI_MODEL=llama-3.2-3b-instruct
-   USE_LLM_FOR_ALL=true
    ```
 
-## Demo Mode vs LLM Mode
+## Streaming Responses
 
-- **`USE_LLM_FOR_ALL=false` (default)**: Common banking keywords (balance, transactions, spending, transfer, freeze/unfreeze) trigger instant regex-based responses. Fast for demos but doesn't use the LLM.
-- **`USE_LLM_FOR_ALL=true`**: Every request goes through the LLM with a full tool-execution loop. The model decides which banking tools to call, executes them, and returns natural language responses. Required for local models.
+All chat messages are streamed through the LLM using the Vercel AI SDK. The model decides which banking tools to call, executes them, and returns natural language responses. Structured cards (balance, transactions, spending) appear immediately when tools are invoked, while the model's text continues streaming.
 
 ## Test
 
