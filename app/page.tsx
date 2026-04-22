@@ -1,7 +1,5 @@
+import { ChatShell } from "@/components/chat/chat-shell";
+
 export default function HomePage() {
-  return (
-    <main>
-      <h1>AI Banking Assistant</h1>
-    </main>
-  );
+  return <ChatShell />;
 }

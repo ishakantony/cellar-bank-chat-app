@@ -10,4 +10,11 @@ describe("HomePage", () => {
       screen.getByRole("heading", { name: /ai banking assistant/i }),
     ).toBeInTheDocument();
   });
+
+  it("shows suggested prompts and the account summary card", () => {
+    render(<HomePage />);
+
+    expect(screen.getByText(/everyday savings/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /what's my balance/i })).toBeInTheDocument();
+  });
 });
