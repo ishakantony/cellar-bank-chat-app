@@ -4,7 +4,8 @@ export type StructuredResultType =
   | "spending"
   | "action-preview"
   | "status"
-  | "chart";
+  | "chart"
+  | "portfolio";
 
 export type ChartPayload =
   | {
@@ -21,13 +22,24 @@ export type ChartPayload =
       echartsOption: Record<string, any>;
     };
 
+export type PortfolioSummary = {
+  totalValue: number;
+  totalCost: number;
+  unrealizedPnl: number;
+  unrealizedPnlPercent: number;
+  currency: string;
+  topHoldings: Array<{ name: string; value: number; pnlPercent: number }>;
+  riskMetrics: { beta: number; volatility: number; sharpeRatio: number };
+};
+
 export type StructuredResult =
   | { type: "balance"; balance: number; currency: string }
   | { type: "transactions"; items: Array<{ id: string; merchant: string; amount: number; direction: "debit" | "credit"; postedAt: string }> }
   | { type: "spending"; monthLabel: string; total: number; topCategory: string; comparisonText: string }
   | { type: "action-preview"; actionId: string; actionType: "transfer" | "freeze-card" | "unfreeze-card"; summary: string; confirmLabel: string; cancelLabel: string }
   | { type: "status"; tone: "success" | "error" | "info"; summary: string }
-  | { type: "chart"; payload: ChartPayload };
+  | { type: "chart"; payload: ChartPayload }
+  | { type: "portfolio"; summary: PortfolioSummary };
 
 export type PendingAction =
   | {

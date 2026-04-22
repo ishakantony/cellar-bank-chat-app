@@ -9,7 +9,8 @@ import {
   getBalance,
   getInvestmentPortfolio,
   listRecentTransactions,
-  renderChart,
+  renderCustomChart,
+  renderStructuredChart,
   summarizeSpending,
 } from "@/lib/mock-tools";
 
@@ -23,8 +24,16 @@ export function getModelConfig() {
 
 const SYSTEM_MESSAGE = `You are the Cellar Bank AI assistant, a helpful and knowledgeable banking assistant for Cellar Bank.
 You can help customers with a wide range of banking tasks, including looking up account information (balances, recent transactions, spending summaries), making transactions (initiating transfers), managing their cards (freeze or unfreeze), and reviewing investment portfolios.
-When users ask about their investments or portfolio, call get_investment_portfolio to retrieve the data, then use render_chart to visualize the most relevant insights. You may render multiple charts in a single response to tell a complete story.
-When calling render_chart, always provide: mode (either "structured" or "custom"), title, and the appropriate fields for that mode. For structured mode, provide chartType and data. For custom mode, provide echartsOption.
+
+CRITICAL INSTRUCTIONS FOR PORTFOLIO QUESTIONS:
+When a user asks about investments, portfolio, or stocks, you MUST follow this exact sequence:
+1. Call get_investment_portfolio ONCE to fetch the data.
+2. Analyze the data and call render_structured_chart with chartType, title, and data to create visualizations. You may call render_structured_chart multiple times to show different perspectives (e.g., a pie chart for allocation, a line chart for performance).
+3. After creating charts, respond with a brief narrative summarizing the insights.
+
+Available chart types for render_structured_chart: pie, bar, line, area, donut, heatmap, treemap, waterfall, radar.
+Only use render_custom_chart if you need a visualization not covered by the structured types.
+
 Always use the available tools when users ask about their account or request actions. For transfers and card status changes, always create a preview first and ask for explicit user confirmation before executing.
 Format your responses using basic markdown only: bold (**text**), italic (*text*), paragraphs, and bullet lists. Do not use headings, tables, code blocks, or other advanced formatting.`;
 
@@ -75,21 +84,28 @@ const bankingTools = {
     execute: async ({ actionId }) => executeCardStatusChange({ actionId }),
   }),
   get_investment_portfolio: tool({
-    description: "Get the current investment portfolio holdings, performance, and risk metrics for the signed-in user.",
+    description: "Get the current investment portfolio holdings, performance, and risk metrics for the signed-in user. Call this ONCE when the user asks about investments, then use render_structured_chart to create charts.",
     parameters: z.object({}),
     execute: async () => getInvestmentPortfolio(),
   }),
-  render_chart: tool({
-    description: "Render a chart visualization in the chat interface. Use this when you want to present data visually to the user. You may call this tool multiple times in a single response to show different perspectives. For structured charts, set mode to 'structured' and provide chartType and data. For custom ECharts configs, set mode to 'custom' and provide echartsOption.",
+  render_structured_chart: tool({
+    description: "Render a pre-defined chart (pie, bar, line, area, donut, heatmap, treemap, waterfall, radar) in the chat. After fetching portfolio data, call this tool to visualize insights.",
     parameters: z.object({
-      mode: z.enum(["structured", "custom"]).describe("Whether to use a pre-defined chart type or a custom ECharts config"),
-      chartType: z.enum(["pie", "bar", "line", "area", "donut", "heatmap", "treemap", "waterfall", "radar"]).optional().describe("Chart type for structured mode (required when mode is 'structured')"),
-      title: z.string().describe("Chart title"),
-      description: z.string().optional().describe("Optional narrative caption"),
-      data: z.array(z.record(z.any())).optional().describe("Chart data for structured mode (required when mode is 'structured')"),
-      echartsOption: z.record(z.any()).optional().describe("Raw ECharts option object for custom mode (required when mode is 'custom')"),
+      chartType: z.enum(["pie", "bar", "line", "area", "donut", "heatmap", "treemap", "waterfall", "radar"]).describe("The type of chart to render"),
+      title: z.string().describe("Chart title displayed above the chart"),
+      description: z.string().optional().describe("Optional short caption explaining the chart"),
+      data: z.array(z.record(z.any())).describe("Chart data as an array of objects. Each object should have keys matching what the chartType expects (e.g., 'name' and 'value' for pie charts)."),
     }),
-    execute: async () => renderChart(),
+    execute: async () => renderStructuredChart(),
+  }),
+  render_custom_chart: tool({
+    description: "Render a custom chart using a raw ECharts configuration object. Only use this if render_structured_chart cannot produce the visualization you need.",
+    parameters: z.object({
+      title: z.string().describe("Chart title displayed above the chart"),
+      description: z.string().optional().describe("Optional short caption explaining the chart"),
+      echartsOption: z.record(z.any()).describe("A complete ECharts option object (series, xAxis, yAxis, etc.)"),
+    }),
+    execute: async () => renderCustomChart(),
   }),
 };
 

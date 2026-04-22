@@ -10,6 +10,39 @@ import { StructuredResult } from "@/components/chat/structured-result";
 import { MarkdownText } from "@/components/chat/markdown-text";
 import type { ChartPayload, StructuredResult as StructuredResultType } from "@/lib/types/chat";
 
+function buildPortfolioSummary(result: any): StructuredResultType {
+  const holdings = result.holdings || [];
+  const totalValue = holdings.reduce((sum: number, h: any) => sum + (h.quantity || 0) * (h.currentPrice || 0), 0);
+  const totalCost = holdings.reduce((sum: number, h: any) => sum + (h.quantity || 0) * (h.avgCost || 0), 0);
+  const unrealizedPnl = totalValue - totalCost;
+  const unrealizedPnlPercent = totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0;
+
+  const holdingsWithValue = holdings.map((h: any) => ({
+    name: h.name || h.ticker,
+    value: (h.quantity || 0) * (h.currentPrice || 0),
+    pnlPercent: h.avgCost > 0 ? (((h.currentPrice || 0) - h.avgCost) / h.avgCost) * 100 : 0,
+  }));
+
+  holdingsWithValue.sort((a: any, b: any) => b.value - a.value);
+
+  return {
+    type: "portfolio",
+    summary: {
+      totalValue: Math.round(totalValue * 100) / 100,
+      totalCost: Math.round(totalCost * 100) / 100,
+      unrealizedPnl: Math.round(unrealizedPnl * 100) / 100,
+      unrealizedPnlPercent: Math.round(unrealizedPnlPercent * 100) / 100,
+      currency: holdings[0]?.currency || "MYR",
+      topHoldings: holdingsWithValue.slice(0, 3).map((h: any) => ({
+        name: h.name,
+        value: Math.round(h.value * 100) / 100,
+        pnlPercent: Math.round(h.pnlPercent * 100) / 100,
+      })),
+      riskMetrics: result.riskMetrics || { beta: 0, volatility: 0, sharpeRatio: 0 },
+    },
+  };
+}
+
 function getStructuredResultsFromMessage(message: Message): StructuredResultType[] {
   const toolInvocations = (message as any).toolInvocations as Array<{
     toolName: string;
@@ -25,13 +58,13 @@ function getStructuredResultsFromMessage(message: Message): StructuredResultType
   for (const invocation of toolInvocations) {
     if (invocation.state !== "result") continue;
 
-    if (invocation.toolName === "render_chart") {
+    if (invocation.toolName === "render_structured_chart" || invocation.toolName === "render_custom_chart") {
       const args = invocation.args;
       if (!args) continue;
-      results.push({
-        type: "chart",
-        payload: args as ChartPayload,
-      });
+      const payload: ChartPayload = args.mode === "custom"
+        ? { mode: "custom", title: args.title, description: args.description, echartsOption: args.echartsOption }
+        : { mode: "structured", chartType: args.chartType, title: args.title, description: args.description, data: args.data };
+      results.push({ type: "chart", payload });
       continue;
     }
 
@@ -74,6 +107,9 @@ function getStructuredResultsFromMessage(message: Message): StructuredResultType
           tone: "success",
           summary: result.confirmationText,
         });
+        break;
+      case "get_investment_portfolio":
+        results.push(buildPortfolioSummary(result));
         break;
     }
   }
