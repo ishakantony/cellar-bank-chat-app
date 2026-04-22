@@ -126,7 +126,8 @@ export async function POST(request: Request) {
       tools: BANKING_TOOLS,
     });
 
-    const text = response.output?.[0]?.content?.[0]?.text ?? "I could not complete that request.";
+    const firstOutput = response.output?.[0] as { content?: Array<{ text?: string }> } | undefined;
+    const text = firstOutput?.content?.[0]?.text ?? "I could not complete that request.";
 
     return NextResponse.json({
       reply: text,
