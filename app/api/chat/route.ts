@@ -118,21 +118,32 @@ export async function POST(request: Request) {
     });
   }
 
-  const client = createOpenAIClient();
-  const response = await client.responses.create({
-    model: "gpt-5.4-mini",
-    input: message,
-    tools: BANKING_TOOLS,
-  });
+  try {
+    const client = createOpenAIClient();
+    const response = await client.responses.create({
+      model: "gpt-5.4-mini",
+      input: message,
+      tools: BANKING_TOOLS,
+    });
 
-  const text = response.output?.[0]?.content?.[0]?.text ?? "I could not complete that request.";
+    const text = response.output?.[0]?.content?.[0]?.text ?? "I could not complete that request.";
 
-  return NextResponse.json({
-    reply: text,
-    data: {
-      type: "status",
-      tone: "info",
-      summary: text,
-    },
-  });
+    return NextResponse.json({
+      reply: text,
+      data: {
+        type: "status",
+        tone: "info",
+        summary: text,
+      },
+    });
+  } catch {
+    return NextResponse.json({
+      reply: "I couldn't complete that safely right now. Please try again.",
+      data: {
+        type: "status",
+        tone: "error",
+        summary: "I couldn't complete that safely right now. Please try again.",
+      },
+    });
+  }
 }
