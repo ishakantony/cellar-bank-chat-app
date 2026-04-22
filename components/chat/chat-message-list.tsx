@@ -1,4 +1,5 @@
 import type { ChatMessage } from "@/lib/types/chat";
+import { StructuredResult } from "@/components/chat/structured-result";
 
 export function ChatMessageList({ messages }: { messages: ChatMessage[] }) {
   if (messages.length === 0) {
@@ -24,6 +25,11 @@ export function ChatMessageList({ messages }: { messages: ChatMessage[] }) {
             }`}
           >
             <p className="text-sm">{msg.text}</p>
+            {msg.structuredResult && (
+              <div className="mt-2">
+                <StructuredResult data={msg.structuredResult} />
+              </div>
+            )}
           </div>
         </div>
       ))}

@@ -20,6 +20,12 @@ export function createConversationController(initialState: ConversationState = E
         pendingAction: action,
       };
     },
+    setPendingAction(action: PendingAction | null) {
+      state = {
+        ...state,
+        pendingAction: action,
+      };
+    },
     clearPendingAction() {
       state = {
         ...state,

@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createOpenAIClient } from "@/lib/ai/openai-client";
 import { BANKING_TOOLS } from "@/lib/ai/tool-schema";
-import { getBalance, listRecentTransactions, summarizeSpending } from "@/lib/mock-tools";
+import {
+  createCardStatusPreview,
+  createTransferPreview,
+  getBalance,
+  listRecentTransactions,
+  summarizeSpending,
+} from "@/lib/mock-tools";
 
 export async function POST(request: Request) {
   const { message } = await request.json();
@@ -39,6 +45,75 @@ export async function POST(request: Request) {
         total: result.total,
         topCategory: result.topCategory,
         comparisonText: result.comparisonText,
+      },
+    });
+  }
+
+  const transferMatch = message.match(/send\s+rm?\s*(\d+(?:\.\d+)?)\s+to\s+(.+)/i);
+  if (transferMatch) {
+    const amount = parseFloat(transferMatch[1]);
+    const recipientName = transferMatch[2].trim();
+    const preview = createTransferPreview({ amount, recipientName });
+    return NextResponse.json({
+      reply: preview.summary,
+      data: {
+        type: "action-preview",
+        actionId: preview.actionId,
+        actionType: "transfer",
+        summary: preview.summary,
+        confirmLabel: "Confirm",
+        cancelLabel: "Cancel",
+      },
+      pendingAction: {
+        id: preview.actionId,
+        kind: "transfer",
+        recipientName,
+        amount,
+        currency: preview.currency,
+        sourceAccountName: preview.sourceAccountName,
+        previewText: preview.summary,
+      },
+    });
+  }
+
+  if (/freeze/i.test(message)) {
+    const preview = createCardStatusPreview({ action: "freeze" });
+    return NextResponse.json({
+      reply: preview.summary,
+      data: {
+        type: "action-preview",
+        actionId: preview.actionId,
+        actionType: "freeze-card",
+        summary: preview.summary,
+        confirmLabel: "Confirm",
+        cancelLabel: "Cancel",
+      },
+      pendingAction: {
+        id: preview.actionId,
+        kind: "freeze-card",
+        cardLabel: preview.cardLabel,
+        previewText: preview.summary,
+      },
+    });
+  }
+
+  if (/unfreeze/i.test(message)) {
+    const preview = createCardStatusPreview({ action: "unfreeze" });
+    return NextResponse.json({
+      reply: preview.summary,
+      data: {
+        type: "action-preview",
+        actionId: preview.actionId,
+        actionType: "unfreeze-card",
+        summary: preview.summary,
+        confirmLabel: "Confirm",
+        cancelLabel: "Cancel",
+      },
+      pendingAction: {
+        id: preview.actionId,
+        kind: "unfreeze-card",
+        cardLabel: preview.cardLabel,
+        previewText: preview.summary,
       },
     });
   }
