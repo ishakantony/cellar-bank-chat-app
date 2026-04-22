@@ -3,9 +3,11 @@ import type { StructuredResult } from "@/lib/types/chat";
 export function StructuredResult({ data }: { data: StructuredResult }) {
   if (data.type === "balance") {
     return (
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-        <p className="text-xs uppercase tracking-wider text-emerald-600">Balance</p>
-        <p className="text-xl font-semibold text-emerald-900">
+      <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-4">
+        <p className="text-xs font-medium uppercase tracking-wider text-emerald-400">
+          Balance
+        </p>
+        <p className="mt-1 text-xl font-semibold text-emerald-300">
           {data.currency} {data.balance.toLocaleString()}
         </p>
       </div>
@@ -14,13 +16,24 @@ export function StructuredResult({ data }: { data: StructuredResult }) {
 
   if (data.type === "transactions") {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <p className="mb-2 text-xs uppercase tracking-wider text-slate-500">Recent Transactions</p>
-        <ul className="space-y-2">
+      <div className="rounded-xl border border-white/5 bg-chat-surface p-4">
+        <p className="mb-3 text-xs font-medium uppercase tracking-wider text-neutral-400">
+          Recent Transactions
+        </p>
+        <ul className="space-y-3">
           {data.items.map((item) => (
-            <li key={item.id} className="flex justify-between text-sm">
-              <span className="text-slate-700">{item.merchant}</span>
-              <span className={item.direction === "credit" ? "text-emerald-600" : "text-slate-900"}>
+            <li
+              key={item.id}
+              className="flex items-center justify-between text-sm"
+            >
+              <span className="text-neutral-300">{item.merchant}</span>
+              <span
+                className={
+                  item.direction === "credit"
+                    ? "text-emerald-400"
+                    : "text-white"
+                }
+              >
                 {item.direction === "credit" ? "+" : "-"}
                 {item.amount.toFixed(2)}
               </span>
@@ -33,34 +46,37 @@ export function StructuredResult({ data }: { data: StructuredResult }) {
 
   if (data.type === "spending") {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-xs uppercase tracking-wider text-slate-500">{data.monthLabel} Spending</p>
-        <p className="text-xl font-semibold text-slate-900">RM {data.total.toFixed(2)}</p>
-        <p className="text-sm text-slate-600">Top: {data.topCategory}</p>
-        <p className="text-xs text-slate-400">{data.comparisonText}</p>
+      <div className="rounded-xl border border-white/5 bg-chat-surface p-4">
+        <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+          {data.monthLabel} Spending
+        </p>
+        <p className="mt-1 text-xl font-semibold text-white">
+          RM {data.total.toFixed(2)}
+        </p>
+        <p className="mt-1 text-sm text-neutral-300">Top: {data.topCategory}</p>
+        <p className="mt-0.5 text-xs text-neutral-500">{data.comparisonText}</p>
       </div>
     );
   }
 
   if (data.type === "action-preview") {
     return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <p className="text-sm font-medium text-amber-900">{data.summary}</p>
+      <div className="rounded-xl border border-amber-500/20 bg-amber-950/30 p-4">
+        <p className="text-sm font-medium text-amber-200">{data.summary}</p>
       </div>
     );
   }
 
   if (data.type === "status") {
+    const toneClasses =
+      data.tone === "success"
+        ? "border-emerald-500/20 bg-emerald-950/30 text-emerald-300"
+        : data.tone === "error"
+          ? "border-rose-500/20 bg-rose-950/30 text-rose-300"
+          : "border-sky-500/20 bg-sky-950/30 text-sky-300";
+
     return (
-      <div
-        className={`rounded-xl border p-4 ${
-          data.tone === "success"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-            : data.tone === "error"
-              ? "border-rose-200 bg-rose-50 text-rose-900"
-              : "border-slate-200 bg-slate-50 text-slate-900"
-        }`}
-      >
+      <div className={`rounded-xl border p-4 ${toneClasses}`}>
         <p className="text-sm">{data.summary}</p>
       </div>
     );

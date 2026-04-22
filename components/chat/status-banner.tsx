@@ -5,16 +5,15 @@ export function StatusBanner({
   tone: "success" | "error" | "info";
   summary: string;
 }) {
+  const toneClasses =
+    tone === "success"
+      ? "border-emerald-500/20 bg-emerald-950/30 text-emerald-300"
+      : tone === "error"
+        ? "border-rose-500/20 bg-rose-950/30 text-rose-300"
+        : "border-sky-500/20 bg-sky-950/30 text-sky-300";
+
   return (
-    <div
-      className={`rounded-xl border p-3 text-sm ${
-        tone === "success"
-          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-          : tone === "error"
-            ? "border-rose-200 bg-rose-50 text-rose-900"
-            : "border-slate-200 bg-slate-50 text-slate-900"
-      }`}
-    >
+    <div className={`rounded-xl border p-3 text-sm ${toneClasses}`}>
       {summary}
     </div>
   );

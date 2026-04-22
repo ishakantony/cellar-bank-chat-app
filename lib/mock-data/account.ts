@@ -1,5 +1,6 @@
 export const DEMO_ACCOUNT = {
   userId: "user_demo_001",
+  userName: "Alex",
   accountId: "acct_primary_001",
   accountName: "Everyday Savings",
   currency: "MYR",

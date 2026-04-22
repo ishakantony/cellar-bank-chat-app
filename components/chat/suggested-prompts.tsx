@@ -6,12 +6,12 @@ export function SuggestedPrompts({
   onSelect: (prompt: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-2">
       {prompts.map((prompt) => (
         <button
           key={prompt}
           onClick={() => onSelect(prompt)}
-          className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:bg-slate-50"
+          className="w-full rounded-xl border border-white/5 bg-neutral-800/50 px-4 py-3 text-left text-sm text-neutral-300 transition-colors hover:bg-neutral-800 active:bg-neutral-700"
         >
           {prompt}
         </button>

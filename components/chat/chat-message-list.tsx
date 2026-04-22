@@ -1,32 +1,74 @@
-import type { ChatMessage } from "@/lib/types/chat";
+import { DEMO_ACCOUNT } from "@/lib/mock-data/account";
+import { SUGGESTED_PROMPTS } from "@/lib/chat/constants";
+import { AccountSummaryCard } from "@/components/chat/account-summary-card";
+import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { StructuredResult } from "@/components/chat/structured-result";
+import type { ChatMessage } from "@/lib/types/chat";
 
-export function ChatMessageList({ messages }: { messages: ChatMessage[] }) {
+export function ChatMessageList({
+  messages,
+  onSelectPrompt,
+}: {
+  messages: ChatMessage[];
+  onSelectPrompt: (prompt: string) => void;
+}) {
   if (messages.length === 0) {
+    const hour = new Date().getHours();
+    const greeting =
+      hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
     return (
-      <div className="flex-1 rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-400">
-        No messages yet. Ask about your money above.
+      <div className="flex h-full flex-col items-center justify-center px-6 py-12 animate-fade-in">
+        <div className="mb-8 text-center">
+          <h2 className="text-2xl font-semibold text-white">
+            {greeting}, {DEMO_ACCOUNT.userName}
+          </h2>
+          <p className="mt-1 text-sm text-neutral-400">
+            How can I help with your banking today?
+          </p>
+        </div>
+
+        <div className="mb-8 w-full max-w-sm">
+          <AccountSummaryCard />
+        </div>
+
+        <div className="w-full max-w-sm space-y-3">
+          <p className="px-1 text-xs font-medium uppercase tracking-wider text-neutral-500">
+            Suggestions
+          </p>
+          <SuggestedPrompts prompts={SUGGESTED_PROMPTS} onSelect={onSelectPrompt} />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 space-y-4">
+    <div className="flex flex-col justify-end space-y-4 px-4 py-6">
       {messages.map((msg) => (
         <div
           key={msg.id}
-          className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          className={`flex animate-message-in ${
+            msg.role === "user" ? "justify-end" : "justify-start"
+          }`}
         >
           <div
-            className={`max-w-md rounded-xl px-4 py-3 ${
+            className={`max-w-[85%] px-4 py-3 text-[15px] leading-relaxed ${
               msg.role === "user"
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-800"
+                ? "rounded-2xl rounded-tr-sm bg-teal-600 text-white"
+                : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
             }`}
           >
-            <p className="text-sm">{msg.text}</p>
+            {(() => {
+              const hasSummary =
+                msg.structuredResult &&
+                (msg.structuredResult.type === "status" ||
+                  msg.structuredResult.type === "action-preview");
+              const isDuplicate =
+                hasSummary && msg.text === msg.structuredResult!.summary;
+              return !isDuplicate ? <p>{msg.text}</p> : null;
+            })()}
             {msg.structuredResult && (
-              <div className="mt-2">
+              <div className="mt-3">
                 <StructuredResult data={msg.structuredResult} />
               </div>
             )}

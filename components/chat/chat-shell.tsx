@@ -1,13 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { AccountSummaryCard } from "@/components/chat/account-summary-card";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
-import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
-import { StatusBanner } from "@/components/chat/status-banner";
-import { SUGGESTED_PROMPTS } from "@/lib/chat/constants";
 import { createConversationController } from "@/lib/chat/conversation-controller";
 import { applyConfirmationReply } from "@/lib/chat/confirmation";
 import type { ChatMessage, ConversationState, PendingAction } from "@/lib/types/chat";
@@ -15,6 +11,13 @@ import type { ChatMessage, ConversationState, PendingAction } from "@/lib/types/
 export function ChatShell() {
   const [controller] = useState(() => createConversationController());
   const [state, setState] = useState<ConversationState>(controller.getState());
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [state.messages, state.pendingAction]);
 
   const refreshState = useCallback(() => {
     setState({ ...controller.getState() });
@@ -167,22 +170,44 @@ export function ChatShell() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-6">
-      <header className="space-y-2">
-        <p className="text-sm uppercase tracking-[0.3em] text-slate-500">Single user demo</p>
-        <h1 className="text-4xl font-semibold text-slate-950">AI Banking Assistant</h1>
+    <div className="flex h-screen flex-col bg-chat-base text-white">
+      {/* App Header */}
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 px-4">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-chat-accent text-sm font-bold text-chat-base">
+            K
+          </div>
+          <span className="text-base font-semibold tracking-tight">KimiBank</span>
+        </div>
+        <div className="h-8 w-8 rounded-full bg-chat-elevated" aria-hidden="true" />
       </header>
-      <AccountSummaryCard />
-      <SuggestedPrompts prompts={SUGGESTED_PROMPTS} onSelect={submitMessage} />
-      <ChatMessageList messages={state.messages} />
-      {state.pendingAction && (
-        <ActionPreviewCard
-          action={state.pendingAction}
-          onConfirm={() => handleConfirm(state.pendingAction!)}
-          onCancel={handleCancel}
+
+      {/* Scrollable Messages */}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto overscroll-contain scrollbar-hide"
+      >
+        <ChatMessageList
+          messages={state.messages}
+          onSelectPrompt={submitMessage}
         />
+      </div>
+
+      {/* Pending Action Preview */}
+      {state.pendingAction && (
+        <div className="shrink-0 px-4 pt-3">
+          <ActionPreviewCard
+            action={state.pendingAction}
+            onConfirm={() => handleConfirm(state.pendingAction!)}
+            onCancel={handleCancel}
+          />
+        </div>
       )}
-      <ChatComposer onSend={submitMessage} disabled={state.isLoading} />
-    </main>
+
+      {/* Composer */}
+      <div className="shrink-0">
+        <ChatComposer onSend={submitMessage} disabled={state.isLoading} />
+      </div>
+    </div>
   );
 }
