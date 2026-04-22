@@ -175,9 +175,9 @@ export function ChatShell() {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 px-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-chat-accent text-sm font-bold text-chat-base">
-            K
+            C
           </div>
-          <span className="text-base font-semibold tracking-tight">KimiBank</span>
+          <span className="text-base font-semibold tracking-tight">Cellar Bank</span>
         </div>
         <div className="h-8 w-8 rounded-full bg-chat-elevated" aria-hidden="true" />
       </header>
