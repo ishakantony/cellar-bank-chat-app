@@ -62,12 +62,14 @@ export function ChatMessageList({
           >
             {(() => {
               const result = msg.structuredResult;
+              const isInfoStatus =
+                result && result.type === "status" && result.tone === "info";
               const hasSummary =
                 result &&
                 (result.type === "status" || result.type === "action-preview");
               const isDuplicate =
                 hasSummary && "summary" in result && msg.text === result.summary;
-              return !isDuplicate ? <p>{msg.text}</p> : null;
+              return isInfoStatus || !isDuplicate ? <p>{msg.text}</p> : null;
             })()}
             {msg.structuredResult && (
               <div className="mt-3">
