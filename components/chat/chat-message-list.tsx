@@ -7,6 +7,7 @@ import { SUGGESTED_PROMPTS } from "@/lib/chat/constants";
 import { AccountSummaryCard } from "@/components/chat/account-summary-card";
 import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { StructuredResult } from "@/components/chat/structured-result";
+import { MarkdownText } from "@/components/chat/markdown-text";
 import type { StructuredResult as StructuredResultType } from "@/lib/types/chat";
 
 function getStructuredResultsFromMessage(message: Message): StructuredResultType[] {
@@ -140,7 +141,11 @@ export function ChatMessageList({
                   : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
               }`}
             >
-              {hasContent && <p>{msg.content}</p>}
+              {hasContent && msg.role === "assistant" ? (
+                <MarkdownText content={msg.content} />
+              ) : hasContent ? (
+                <p>{msg.content}</p>
+              ) : null}
               {structuredResults.length > 0 && (
                 <div className="mt-3 space-y-3">
                   {structuredResults.map((result, i) => (
