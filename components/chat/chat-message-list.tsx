@@ -7,9 +7,11 @@ import type { ChatMessage } from "@/lib/types/chat";
 
 export function ChatMessageList({
   messages,
+  isLoading,
   onSelectPrompt,
 }: {
   messages: ChatMessage[];
+  isLoading?: boolean;
   onSelectPrompt: (prompt: string) => void;
 }) {
   if (messages.length === 0) {
@@ -75,6 +77,21 @@ export function ChatMessageList({
           </div>
         </div>
       ))}
+
+      {isLoading && (
+        <div className="flex animate-message-in justify-start">
+          <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated px-4 py-3 text-[15px] leading-relaxed text-neutral-100">
+            <span className="inline-flex items-center gap-1">
+              <span className="animate-thinking-pulse">Thinking</span>
+              <span className="inline-flex">
+                <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "0ms" }}>.</span>
+                <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "150ms" }}>.</span>
+                <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "300ms" }}>.</span>
+              </span>
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

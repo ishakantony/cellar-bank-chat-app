@@ -27,10 +27,20 @@ const config: Config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        "thinking-pulse": {
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
+        },
+        "thinking-dot": {
+          "0%, 100%": { opacity: "0.3", transform: "translateY(0)" },
+          "50%": { opacity: "1", transform: "translateY(-3px)" },
+        },
       },
       animation: {
         "message-in": "message-in 0.25s ease-out forwards",
         "fade-in": "fade-in 0.4s ease-out forwards",
+        "thinking-pulse": "thinking-pulse 2s ease-in-out infinite",
+        "thinking-dot": "thinking-dot 1.2s ease-in-out infinite",
       },
     },
   },

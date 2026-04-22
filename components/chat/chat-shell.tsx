@@ -189,6 +189,7 @@ export function ChatShell() {
       >
         <ChatMessageList
           messages={state.messages}
+          isLoading={state.isLoading}
           onSelectPrompt={submitMessage}
         />
       </div>
