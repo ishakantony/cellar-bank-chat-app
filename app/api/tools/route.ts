@@ -1,49 +1,19 @@
 import { NextResponse } from "next/server";
-import {
-  createCardStatusPreview,
-  createTransferPreview,
-  executeCardStatusChange,
-  executeTransfer,
-  getBalance,
-  listRecentTransactions,
-  summarizeSpending,
-} from "@/lib/mock-tools";
+import { executeTool } from "@/lib/ai/tool-executor";
 
 export async function POST(request: Request) {
   try {
     const { toolName, input } = await request.json();
 
-    const result =
-      toolName === "get_balance"
-        ? getBalance()
-        : toolName === "list_recent_transactions"
-          ? listRecentTransactions()
-          : toolName === "summarize_spending"
-            ? summarizeSpending()
-            : toolName === "create_transfer_preview"
-              ? createTransferPreview(input)
-              : toolName === "execute_transfer"
-                ? executeTransfer(input)
-                : toolName === "create_card_status_preview"
-                  ? createCardStatusPreview(input)
-                  : toolName === "execute_card_status_change"
-                    ? executeCardStatusChange(input)
-                    : null;
-
-    if (!result) {
-      return NextResponse.json(
-        { error: `Unsupported tool: ${toolName}` },
-        { status: 400 },
-      );
-    }
+    const result = executeTool(toolName, input);
 
     return NextResponse.json({ result });
-  } catch {
+  } catch (error: any) {
     return NextResponse.json(
       {
-        error: "The requested banking action could not be completed.",
+        error: error.message || "The requested banking action could not be completed.",
       },
-      { status: 500 },
+      { status: error.message?.includes("Unsupported tool") ? 400 : 500 },
     );
   }
 }

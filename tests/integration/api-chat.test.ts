@@ -33,15 +33,17 @@ describe("POST /api/tools", () => {
 
 vi.mock("@/lib/ai/openai-client", () => ({
   createOpenAIClient: () => ({
-    responses: {
-      create: vi.fn().mockResolvedValue({
-        output: [
-          {
-            type: "message",
-            content: [{ type: "output_text", text: "Your balance is RM 8,420.15." }],
-          },
-        ],
-      }),
+    chat: {
+      completions: {
+        create: vi.fn().mockResolvedValue({
+          choices: [
+            {
+              finish_reason: "stop",
+              message: { content: "Your balance is RM 8,420.15." },
+            },
+          ],
+        }),
+      },
     },
   }),
 }));
