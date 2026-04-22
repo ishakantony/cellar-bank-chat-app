@@ -12,6 +12,8 @@
   "dependencies": {
     "@ai-sdk/openai": "^1.0.0",
     "ai": "^4.0.0",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
     "next": "^16.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
