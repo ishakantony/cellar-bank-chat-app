@@ -43,7 +43,6 @@ export function MarkdownText({ content }: MarkdownTextProps) {
         }}
         allowedElements={["p", "strong", "em", "ul", "ol", "li", "br"]}
         unwrapDisallowed={true}
-        onError={() => setHasError(true)}
       >
         {content}
       </ReactMarkdown>

@@ -14,7 +14,7 @@ describe("ChartRenderer", () => {
         }}
       />
     );
-    expect(screen.getByTestId("pie-chart")).toBeInTheDocument();
+    expect(screen.getByTestId("echarts-container")).toBeInTheDocument();
   });
 
   it("renders fallback for unknown chart type", () => {
