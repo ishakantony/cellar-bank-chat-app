@@ -121,7 +121,7 @@ export async function POST(request: Request) {
   try {
     const client = createOpenAIClient();
     const response = await client.responses.create({
-      model: "gpt-5.4-mini",
+      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
       input: message,
       tools: BANKING_TOOLS,
     });

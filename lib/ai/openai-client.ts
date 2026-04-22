@@ -7,5 +7,7 @@ export function createOpenAIClient() {
     throw new Error("OPENAI_API_KEY is not configured.");
   }
 
-  return new OpenAI({ apiKey });
+  const baseURL = process.env.OPENAI_BASE_URL;
+
+  return new OpenAI({ apiKey, baseURL });
 }
