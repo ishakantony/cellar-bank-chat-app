@@ -8,12 +8,13 @@ import { AccountSummaryCard } from "@/components/chat/account-summary-card";
 import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { StructuredResult } from "@/components/chat/structured-result";
 import { MarkdownText } from "@/components/chat/markdown-text";
-import type { StructuredResult as StructuredResultType } from "@/lib/types/chat";
+import type { ChartPayload, StructuredResult as StructuredResultType } from "@/lib/types/chat";
 
 function getStructuredResultsFromMessage(message: Message): StructuredResultType[] {
   const toolInvocations = (message as any).toolInvocations as Array<{
     toolName: string;
     state: "call" | "result";
+    args?: any;
     result?: any;
   }> | undefined;
 
@@ -23,6 +24,17 @@ function getStructuredResultsFromMessage(message: Message): StructuredResultType
 
   for (const invocation of toolInvocations) {
     if (invocation.state !== "result") continue;
+
+    if (invocation.toolName === "render_chart") {
+      const args = invocation.args;
+      if (!args) continue;
+      results.push({
+        type: "chart",
+        payload: args as ChartPayload,
+      });
+      continue;
+    }
+
     const result = invocation.result;
     if (!result) continue;
 

@@ -1,4 +1,5 @@
 import type { StructuredResult } from "@/lib/types/chat";
+import { ChartRenderer } from "@/components/charts/chart-renderer";
 
 export function StructuredResult({ data }: { data: StructuredResult }) {
   if (data.type === "balance") {
@@ -82,6 +83,10 @@ export function StructuredResult({ data }: { data: StructuredResult }) {
         <p className="text-sm">{data.summary}</p>
       </div>
     );
+  }
+
+  if (data.type === "chart") {
+    return <ChartRenderer data={data.payload} />;
   }
 
   return null;
