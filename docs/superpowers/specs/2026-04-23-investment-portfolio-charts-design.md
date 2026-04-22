@@ -168,12 +168,16 @@ export type ChartType = keyof typeof chartRegistry;
 
 Chart cards render **inline in chat messages**, below the AI's markdown text. They use the same card styling as existing `StructuredResult` cards (rounded-xl, border, dark background).
 
-In `components/chat/chat-message-list.tsx`, extend `getStructuredResultsFromMessage` to handle `render_chart` tool invocations and produce a new `StructuredResult` type: `{ type: "chart", chartData: ChartPayload }`.
+**Important distinction:** For data-fetching tools (e.g., `get_balance`), the frontend reads the tool **result** to get the data. For `render_chart`, the frontend reads the tool **arguments** (`args`) because that is where the chart configuration (`title`, `data`, `echartsOption`, etc.) lives. The tool result is only an acknowledgment (`{ success: true, chartId: string }`).
+
+In `components/chat/chat-message-list.tsx`, extend `getStructuredResultsFromMessage` to handle `render_chart` tool invocations:
+- Read `invocation.args` (not `invocation.result`) when `toolName === "render_chart"`.
+- Produce a new `StructuredResult` type: `{ type: "chart", payload: ChartPayload }`.
 
 In `components/chat/structured-result.tsx`, add a new branch:
 ```ts
 if (data.type === "chart") {
-  return <ChartRenderer data={data.chartData} />;
+  return <ChartRenderer data={data.payload} />;
 }
 ```
 
@@ -187,7 +191,11 @@ export type ChartPayload =
   | { mode: "custom"; title: string; description?: string; echartsOption: Record<string, any> };
 
 export type StructuredResult =
-  | ...existing types...
+  | { type: "balance"; balance: number; currency: string }
+  | { type: "transactions"; items: Array<{ id: string; merchant: string; amount: number; direction: "debit" | "credit"; postedAt: string }> }
+  | { type: "spending"; monthLabel: string; total: number; topCategory: string; comparisonText: string }
+  | { type: "action-preview"; actionId: string; actionType: "transfer" | "freeze-card" | "unfreeze-card"; summary: string; confirmLabel: string; cancelLabel: string }
+  | { type: "status"; tone: "success" | "error" | "info"; summary: string }
   | { type: "chart"; payload: ChartPayload };
 ```
 
