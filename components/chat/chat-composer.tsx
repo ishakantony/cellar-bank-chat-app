@@ -23,7 +23,7 @@ export function ChatComposer({
       onSubmit={handleSubmit}
       className="border-t border-white/5 bg-chat-base/80 p-4 backdrop-blur-md"
     >
-      <div className="flex items-end gap-2 rounded-3xl border border-white/10 bg-chat-surface px-4 py-3 transition-colors focus-within:border-teal-500/40">
+      <div className="flex items-center gap-2 rounded-3xl border border-white/10 bg-chat-surface px-4 py-3 transition-colors focus-within:border-teal-500/40">
         <input
           type="text"
           value={text}
@@ -36,7 +36,7 @@ export function ChatComposer({
           type="submit"
           disabled={disabled || !text.trim()}
           aria-label="Send"
-          className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:opacity-30 disabled:hover:bg-teal-600"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:opacity-30 disabled:hover:bg-teal-600"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
