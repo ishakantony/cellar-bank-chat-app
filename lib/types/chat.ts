@@ -3,14 +3,31 @@ export type StructuredResultType =
   | "transactions"
   | "spending"
   | "action-preview"
-  | "status";
+  | "status"
+  | "chart";
+
+export type ChartPayload =
+  | {
+      mode: "structured";
+      chartType: string;
+      title: string;
+      description?: string;
+      data: Array<Record<string, any>>;
+    }
+  | {
+      mode: "custom";
+      title: string;
+      description?: string;
+      echartsOption: Record<string, any>;
+    };
 
 export type StructuredResult =
   | { type: "balance"; balance: number; currency: string }
   | { type: "transactions"; items: Array<{ id: string; merchant: string; amount: number; direction: "debit" | "credit"; postedAt: string }> }
   | { type: "spending"; monthLabel: string; total: number; topCategory: string; comparisonText: string }
   | { type: "action-preview"; actionId: string; actionType: "transfer" | "freeze-card" | "unfreeze-card"; summary: string; confirmLabel: string; cancelLabel: string }
-  | { type: "status"; tone: "success" | "error" | "info"; summary: string };
+  | { type: "status"; tone: "success" | "error" | "info"; summary: string }
+  | { type: "chart"; payload: ChartPayload };
 
 export type PendingAction =
   | {
