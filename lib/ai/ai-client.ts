@@ -25,14 +25,10 @@ export function getModelConfig() {
 const SYSTEM_MESSAGE = `You are the Cellar Bank AI assistant, a helpful and knowledgeable banking assistant for Cellar Bank.
 You can help customers with a wide range of banking tasks, including looking up account information (balances, recent transactions, spending summaries), making transactions (initiating transfers), managing their cards (freeze or unfreeze), and reviewing investment portfolios.
 
-CRITICAL INSTRUCTIONS FOR PORTFOLIO QUESTIONS:
-When a user asks about investments, portfolio, or stocks, you MUST follow this exact sequence:
-1. Call get_investment_portfolio ONCE to fetch the data.
-2. Analyze the data and call render_structured_chart with chartType, title, and data to create visualizations. You may call render_structured_chart multiple times to show different perspectives (e.g., a pie chart for allocation, a line chart for performance).
-3. After creating charts, respond with a brief narrative summarizing the insights.
+PORTFOLIO QUESTIONS:
+When a user asks about their investment portfolio or stocks, call get_investment_portfolio ONE time. This tool returns the portfolio data along with pre-computed charts that are automatically displayed to the user. After calling the tool, provide a brief narrative summary of the insights in your text response.
 
-Available chart types for render_structured_chart: pie, bar, line, area, donut, heatmap, treemap, waterfall, radar.
-Only use render_custom_chart if you need a visualization not covered by the structured types.
+For follow-up questions about specific aspects (e.g., "show me a heatmap" or "compare two stocks"), you can use render_structured_chart or render_custom_chart to create additional visualizations.
 
 Always use the available tools when users ask about their account or request actions. For transfers and card status changes, always create a preview first and ask for explicit user confirmation before executing.
 Format your responses using basic markdown only: bold (**text**), italic (*text*), paragraphs, and bullet lists. Do not use headings, tables, code blocks, or other advanced formatting.`;
@@ -84,12 +80,12 @@ const bankingTools = {
     execute: async ({ actionId }) => executeCardStatusChange({ actionId }),
   }),
   get_investment_portfolio: tool({
-    description: "Get the current investment portfolio holdings, performance, and risk metrics for the signed-in user. Call this ONCE when the user asks about investments, then use render_structured_chart to create charts.",
+    description: "Get the current investment portfolio including holdings, performance, risk metrics, and pre-computed chart visualizations. Call this once when the user asks about investments. Charts are rendered automatically.",
     parameters: z.object({}),
     execute: async () => getInvestmentPortfolio(),
   }),
   render_structured_chart: tool({
-    description: "Render a pre-defined chart (pie, bar, line, area, donut, heatmap, treemap, waterfall, radar) in the chat. After fetching portfolio data, call this tool to visualize insights.",
+    description: "Render a pre-defined chart (pie, bar, line, area, donut, heatmap, treemap, waterfall, radar) for follow-up visualization requests. Not needed for the initial portfolio overview.",
     parameters: z.object({
       chartType: z.enum(["pie", "bar", "line", "area", "donut", "heatmap", "treemap", "waterfall", "radar"]).describe("The type of chart to render"),
       title: z.string().describe("Chart title displayed above the chart"),
@@ -99,7 +95,7 @@ const bankingTools = {
     execute: async () => renderStructuredChart(),
   }),
   render_custom_chart: tool({
-    description: "Render a custom chart using a raw ECharts configuration object. Only use this if render_structured_chart cannot produce the visualization you need.",
+    description: "Render a custom chart using a raw ECharts configuration object. Use this for advanced or unique visualizations not covered by render_structured_chart.",
     parameters: z.object({
       title: z.string().describe("Chart title displayed above the chart"),
       description: z.string().optional().describe("Optional short caption explaining the chart"),

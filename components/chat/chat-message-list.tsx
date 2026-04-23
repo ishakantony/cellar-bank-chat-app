@@ -12,18 +12,12 @@ import type { ChartPayload, StructuredResult as StructuredResultType } from "@/l
 
 function buildPortfolioSummary(result: any): StructuredResultType {
   const holdings = result.holdings || [];
-  const totalValue = holdings.reduce((sum: number, h: any) => sum + (h.quantity || 0) * (h.currentPrice || 0), 0);
-  const totalCost = holdings.reduce((sum: number, h: any) => sum + (h.quantity || 0) * (h.avgCost || 0), 0);
-  const unrealizedPnl = totalValue - totalCost;
-  const unrealizedPnlPercent = totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0;
+  const totalValue = result.totalValue || holdings.reduce((sum: number, h: any) => sum + (h.value || 0), 0);
+  const totalCost = result.totalCost || holdings.reduce((sum: number, h: any) => sum + (h.quantity || 0) * (h.avgCost || 0), 0);
+  const unrealizedPnl = result.unrealizedPnl || (totalValue - totalCost);
+  const unrealizedPnlPercent = result.unrealizedPnlPercent || (totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0);
 
-  const holdingsWithValue = holdings.map((h: any) => ({
-    name: h.name || h.ticker,
-    value: (h.quantity || 0) * (h.currentPrice || 0),
-    pnlPercent: h.avgCost > 0 ? (((h.currentPrice || 0) - h.avgCost) / h.avgCost) * 100 : 0,
-  }));
-
-  holdingsWithValue.sort((a: any, b: any) => b.value - a.value);
+  const holdingsSorted = [...holdings].sort((a: any, b: any) => (b.value || 0) - (a.value || 0));
 
   return {
     type: "portfolio",
@@ -32,11 +26,11 @@ function buildPortfolioSummary(result: any): StructuredResultType {
       totalCost: Math.round(totalCost * 100) / 100,
       unrealizedPnl: Math.round(unrealizedPnl * 100) / 100,
       unrealizedPnlPercent: Math.round(unrealizedPnlPercent * 100) / 100,
-      currency: holdings[0]?.currency || "MYR",
-      topHoldings: holdingsWithValue.slice(0, 3).map((h: any) => ({
-        name: h.name,
-        value: Math.round(h.value * 100) / 100,
-        pnlPercent: Math.round(h.pnlPercent * 100) / 100,
+      currency: result.currency || holdings[0]?.currency || "MYR",
+      topHoldings: holdingsSorted.slice(0, 3).map((h: any) => ({
+        name: h.name || h.ticker,
+        value: Math.round((h.value || 0) * 100) / 100,
+        pnlPercent: Math.round((h.pnlPercent || 0) * 100) / 100,
       })),
       riskMetrics: result.riskMetrics || { beta: 0, volatility: 0, sharpeRatio: 0 },
     },
@@ -108,9 +102,15 @@ function getStructuredResultsFromMessage(message: Message): StructuredResultType
           summary: result.confirmationText,
         });
         break;
-      case "get_investment_portfolio":
+      case "get_investment_portfolio": {
         results.push(buildPortfolioSummary(result));
+        // Also render pre-computed charts from the backend
+        const charts: ChartPayload[] = result.charts || [];
+        for (const chart of charts) {
+          results.push({ type: "chart", payload: chart });
+        }
         break;
+      }
     }
   }
 
