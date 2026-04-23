@@ -102,4 +102,30 @@ describe("ChatMessageList with charts", () => {
     expect(screen.getByText("Your balance is")).toBeInTheDocument();
     expect(screen.getByText("Balance")).toBeInTheDocument();
   });
+
+  it("shows Thinking indicator while loading even when tool results have arrived", () => {
+    const messages = [
+      {
+        id: "msg-1",
+        role: "assistant" as const,
+        content: "",
+        toolInvocations: [
+          {
+            toolName: "get_balance",
+            state: "result" as const,
+            args: {},
+            result: { balance: 12500.5, currency: "MYR" },
+          },
+        ],
+      },
+    ];
+
+    render(<ChatMessageList messages={messages as any} isLoading onSelectPrompt={() => {}} />);
+    // Thinking indicator should be visible
+    expect(screen.getByText("Thinking")).toBeInTheDocument();
+    // Balance card should NOT appear yet (no content yet)
+    expect(screen.queryByText("Balance")).not.toBeInTheDocument();
+    // Empty chat bubble should NOT appear either
+    expect(screen.queryByText("MYR 12,500.50")).not.toBeInTheDocument();
+  });
 });

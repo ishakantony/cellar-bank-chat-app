@@ -170,8 +170,12 @@ export function ChatMessageList({
         const structuredResults = msg.role === "assistant" ? getStructuredResultsFromMessage(msg) : [];
         const hasContent = msg.content && msg.content.trim().length > 0;
 
-        // Skip rendering empty assistant placeholder messages during streaming
-        if (msg.role === "assistant" && !hasContent && structuredResults.length === 0) {
+        const isLastWhileLoading = isLoading && index === messages.length - 1;
+
+        // Skip rendering empty assistant placeholder messages during streaming.
+        // Also skip when tool results exist but are suppressed while loading,
+        // otherwise an empty chat bubble would appear.
+        if (msg.role === "assistant" && !hasContent && (structuredResults.length === 0 || isLastWhileLoading)) {
           return null;
         }
 
@@ -217,9 +221,7 @@ export function ChatMessageList({
         const lastMsg = messages[messages.length - 1];
         const isThinking =
           lastMsg?.role === "user" ||
-          (lastMsg?.role === "assistant" &&
-            !lastMsg.content?.trim() &&
-            getStructuredResultsFromMessage(lastMsg).length === 0);
+          (lastMsg?.role === "assistant" && !lastMsg.content?.trim());
         if (!isThinking) return null;
         return (
           <div className="flex animate-message-in justify-start">
