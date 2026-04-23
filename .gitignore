@@ -29,3 +29,7 @@ coverage/
 .vercel
 .worktrees/
 *.tsbuildinfo
+
+# AI
+.agents/
+skills-lock.json
