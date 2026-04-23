@@ -121,10 +121,12 @@ export function ChatMessageList({
   messages,
   isLoading,
   onSelectPrompt,
+  suggestions = {},
 }: {
   messages: Message[];
   isLoading?: boolean;
   onSelectPrompt: (prompt: string) => void;
+  suggestions?: Record<string, string[]>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -185,6 +187,11 @@ export function ChatMessageList({
           msg.role === "assistant" &&
           index === messages.length - 1;
 
+        const msgSuggestions =
+          msg.role === "assistant" && structuredResults.length > 0
+            ? suggestions[msg.id]
+            : undefined;
+
         return (
           <div
             key={msg.id}
@@ -192,23 +199,34 @@ export function ChatMessageList({
               msg.role === "user" ? "justify-end" : "justify-start"
             }`}
           >
-            <div
-              className={`max-w-[85%] px-4 py-3 text-[15px] leading-relaxed ${
-                msg.role === "user"
-                  ? "rounded-2xl rounded-tr-sm bg-teal-600 text-white"
-                  : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
-              }`}
-            >
-              {hasContent && msg.role === "assistant" ? (
-                <MarkdownText content={msg.content} />
-              ) : hasContent ? (
-                <p>{msg.content}</p>
-              ) : null}
-              {structuredResults.length > 0 && !isLastAssistantWhileStreaming && (
-                <div className="mt-3 space-y-3">
-                  {structuredResults.map((result, i) => (
-                    <StructuredResult key={i} data={result} />
-                  ))}
+            <div className="max-w-[85%]">
+              <div
+                className={`px-4 py-3 text-[15px] leading-relaxed ${
+                  msg.role === "user"
+                    ? "rounded-2xl rounded-tr-sm bg-teal-600 text-white"
+                    : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
+                }`}
+              >
+                {hasContent && msg.role === "assistant" ? (
+                  <MarkdownText content={msg.content} />
+                ) : hasContent ? (
+                  <p>{msg.content}</p>
+                ) : null}
+                {structuredResults.length > 0 && !isLastAssistantWhileStreaming && (
+                  <div className="mt-3 space-y-3">
+                    {structuredResults.map((result, i) => (
+                      <StructuredResult key={i} data={result} />
+                    ))}
+                  </div>
+                )}
+              </div>
+              {msgSuggestions && msgSuggestions.length > 0 && (
+                <div className="mt-2">
+                  <SuggestedPrompts
+                    prompts={msgSuggestions}
+                    onSelect={onSelectPrompt}
+                    variant="pill"
+                  />
                 </div>
               )}
             </div>
