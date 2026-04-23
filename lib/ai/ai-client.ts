@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { streamText, tool, type Message } from "ai";
+import { generateText, streamText, tool, type Message } from "ai";
 import { z } from "zod";
 import {
   createCardStatusPreview,
@@ -107,6 +107,52 @@ const bankingTools = {
 
 export interface StreamAIResponseOptions {
   messages: Array<Omit<Message, "id">>;
+}
+
+const SUGGESTIONS_SYSTEM_PROMPT = `You are a helpful banking assistant. Based on the conversation history, generate exactly 3 contextual follow-up questions that a user might want to ask next.
+
+Return ONLY a JSON array of strings. Do not include markdown formatting, code blocks, or any other text.
+
+Example: ["What is my balance?", "How do I transfer money?", "Show my recent transactions"]`;
+
+function cleanJsonResponse(text: string): string {
+  return text
+    .replace(/```(?:json)?\n?/g, "")
+    .replace(/```/g, "")
+    .trim();
+}
+
+export async function generateSuggestions(messages: Array<{ role: string; content: string }>): Promise<string[]> {
+  const modelName = process.env.SUGGESTION_MODEL ?? "gpt-4o-mini";
+  const apiKey = process.env.OPENAI_API_KEY;
+  const baseURL = process.env.OPENAI_BASE_URL;
+
+  const openai = createOpenAI({
+    apiKey,
+    baseURL,
+    compatibility: "compatible",
+  });
+
+  try {
+    const { text } = await generateText({
+      model: openai(modelName),
+      system: SUGGESTIONS_SYSTEM_PROMPT,
+      messages,
+    });
+
+    const cleaned = cleanJsonResponse(text);
+
+    const parsedJson = JSON.parse(cleaned);
+    if (Array.isArray(parsedJson)) {
+      return parsedJson
+        .filter((item): item is string => typeof item === "string")
+        .slice(0, 3);
+    }
+  } catch {
+    // Invalid JSON from model or generateText error — fall back to empty array
+  }
+
+  return [];
 }
 
 export async function streamAIResponse(options: StreamAIResponseOptions) {
