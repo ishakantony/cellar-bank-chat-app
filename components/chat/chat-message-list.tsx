@@ -187,7 +187,10 @@ export function ChatMessageList({
           msg.role === "assistant" &&
           index === messages.length - 1;
 
-        const msgSuggestions = msg.role === "assistant" ? suggestions[msg.id] : undefined;
+        const msgSuggestions =
+          msg.role === "assistant" && structuredResults.length > 0
+            ? suggestions[msg.id]
+            : undefined;
 
         return (
           <div
