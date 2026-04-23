@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-const mockGenerateObject = vi.fn();
+const mockGenerateText = vi.fn();
 
 vi.mock("ai", async (importOriginal) => {
   const actual = await importOriginal<typeof import("ai")>();
   return {
     ...actual,
-    generateObject: (...args: any[]) => mockGenerateObject(...args),
+    generateText: (...args: any[]) => mockGenerateText(...args),
   };
 });
 
@@ -17,15 +17,13 @@ vi.mock("@ai-sdk/openai", () => ({
 import { generateSuggestions } from "@/lib/ai/ai-client";
 
 describe("generateSuggestions", () => {
-  it("returns suggestions when model returns valid object", async () => {
-    mockGenerateObject.mockResolvedValue({
-      object: {
-        suggestions: [
-          "Show me my recent transactions",
-          "What did I spend this month?",
-          "How is my portfolio doing?",
-        ],
-      },
+  beforeEach(() => {
+    mockGenerateText.mockReset();
+  });
+
+  it("returns parsed suggestions when model returns valid JSON array", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: '["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]',
     });
 
     const result = await generateSuggestions([
@@ -39,23 +37,40 @@ describe("generateSuggestions", () => {
     ]);
   });
 
-  it("limits to 3 suggestions even if model returns more", async () => {
-    mockGenerateObject.mockResolvedValue({
-      object: {
-        suggestions: [
-          "Show me my recent transactions",
-          "What did I spend this month?",
-          "How is my portfolio doing?",
-          "Extra suggestion",
-        ],
-      },
+  it("returns empty array when model returns invalid JSON", async () => {
+    mockGenerateText.mockResolvedValue({ text: "not valid json at all" });
+
+    const result = await generateSuggestions([
+      { role: "user", content: "Hello" },
+    ]);
+
+    expect(result).toEqual([]);
+  });
+
+  it("returns suggestions from markdown code block", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: '```json\n["Show me my recent transactions", "What did I spend this month?"]\n```',
     });
 
     const result = await generateSuggestions([
       { role: "user", content: "Hello" },
     ]);
 
-    expect(result).toHaveLength(3);
+    expect(result).toEqual([
+      "Show me my recent transactions",
+      "What did I spend this month?",
+    ]);
+  });
+
+  it("extracts JSON array from surrounding text", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: 'Here are your suggestions:\n\n["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]\n\nHope that helps!',
+    });
+
+    const result = await generateSuggestions([
+      { role: "user", content: "Hello" },
+    ]);
+
     expect(result).toEqual([
       "Show me my recent transactions",
       "What did I spend this month?",
@@ -63,8 +78,35 @@ describe("generateSuggestions", () => {
     ]);
   });
 
-  it("returns empty array when generateObject throws", async () => {
-    mockGenerateObject.mockRejectedValue(new Error("model error"));
+  it("extracts suggestions from JSON object", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: '{"suggestions": ["Show me my recent transactions", "What did I spend this month?"]}',
+    });
+
+    const result = await generateSuggestions([
+      { role: "user", content: "Hello" },
+    ]);
+
+    expect(result).toEqual([
+      "Show me my recent transactions",
+      "What did I spend this month?",
+    ]);
+  });
+
+  it("filters non-string items and limits to 3", async () => {
+    mockGenerateText.mockResolvedValue({
+      text: '["Valid", 123, null, "Also valid", "Extra", "Another extra"]',
+    });
+
+    const result = await generateSuggestions([
+      { role: "user", content: "Hello" },
+    ]);
+
+    expect(result).toEqual(["Valid", "Also valid", "Extra"]);
+  });
+
+  it("returns empty array when generateText throws", async () => {
+    mockGenerateText.mockRejectedValue(new Error("model error"));
 
     const result = await generateSuggestions([
       { role: "user", content: "Hello" },

@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateObject, generateText, streamText, tool, type Message } from "ai";
+import { generateText, streamText, tool, type Message } from "ai";
 import { z } from "zod";
 import {
   createCardStatusPreview,
@@ -109,10 +109,6 @@ export interface StreamAIResponseOptions {
   messages: Array<Omit<Message, "id">>;
 }
 
-const suggestionsSchema = z.object({
-  suggestions: z.array(z.string()).length(3),
-});
-
 const SUGGESTIONS_SYSTEM_PROMPT = `You are a helpful banking assistant. Based on the conversation history, generate exactly 3 suggested follow-up prompts that the USER might type next.
 
 CRITICAL RULES:
@@ -122,8 +118,78 @@ CRITICAL RULES:
 - Each prompt should be a natural, concise message the user would send (under 10 words ideally).
 - Suggestions must be relevant to banking and the conversation context.
 
-GOOD examples: ["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]
-BAD examples: ["Would you like to see your transactions?", "Do you want a spending breakdown?", "Shall I show your portfolio?"]`;
+OUTPUT FORMAT — You MUST return ONLY a raw JSON array. No markdown, no code blocks, no explanations, no extra text.
+
+CORRECT output:
+["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]
+
+INCORRECT output:
+Here are your suggestions: ["Show me my recent transactions"]
+\`\`\`json
+["Show me my recent transactions"]
+\`\`\`
+{"suggestions": ["Show me my recent transactions"]}`;
+
+function extractJsonArray(text: string): unknown {
+  // Strategy 1: Try parsing the whole thing as JSON
+  try {
+    return JSON.parse(text.trim());
+  } catch {
+    // continue
+  }
+
+  // Strategy 2: Strip markdown code fences and try again
+  const withoutFences = text
+    .replace(/```(?:json)?\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+  try {
+    return JSON.parse(withoutFences);
+  } catch {
+    // continue
+  }
+
+  // Strategy 3: Extract first JSON array from the text
+  const arrayMatch = text.match(/\[[\s\S]*?\]/);
+  if (arrayMatch) {
+    try {
+      return JSON.parse(arrayMatch[0]);
+    } catch {
+      // continue
+    }
+  }
+
+  // Strategy 4: Extract first JSON object from the text
+  const objectMatch = text.match(/\{[\s\S]*?\}/);
+  if (objectMatch) {
+    try {
+      return JSON.parse(objectMatch[0]);
+    } catch {
+      // continue
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeSuggestions(parsed: unknown): string[] {
+  if (Array.isArray(parsed)) {
+    return parsed
+      .filter((item): item is string => typeof item === "string")
+      .slice(0, 3);
+  }
+
+  if (parsed && typeof parsed === "object" && "suggestions" in parsed) {
+    const suggestions = (parsed as Record<string, unknown>).suggestions;
+    if (Array.isArray(suggestions)) {
+      return suggestions
+        .filter((item): item is string => typeof item === "string")
+        .slice(0, 3);
+    }
+  }
+
+  return [];
+}
 
 export async function generateSuggestions(
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>
@@ -139,14 +205,18 @@ export async function generateSuggestions(
   });
 
   try {
-    const { object } = await generateObject({
+    const { text } = await generateText({
       model: openai(modelName),
       system: SUGGESTIONS_SYSTEM_PROMPT,
       messages,
-      schema: suggestionsSchema,
     });
 
-    return object.suggestions.slice(0, 3);
+    const parsed = extractJsonArray(text);
+    if (parsed !== undefined) {
+      return normalizeSuggestions(parsed);
+    }
+
+    return [];
   } catch (error) {
     console.error("Error generating suggestions. Returning empty suggestions.", error);
     return [];
