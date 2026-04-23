@@ -56,4 +56,50 @@ describe("ChatMessageList with charts", () => {
     expect(screen.getByText("Investment Portfolio")).toBeInTheDocument();
     expect(screen.getByText(/Malayan Banking Bhd/i)).toBeInTheDocument();
   });
+
+  it("suppresses tool results for the last assistant message while streaming", () => {
+    const messages = [
+      {
+        id: "msg-1",
+        role: "assistant" as const,
+        content: "Your balance is",
+        toolInvocations: [
+          {
+            toolName: "get_balance",
+            state: "result" as const,
+            args: {},
+            result: { balance: 12500.5, currency: "MYR" },
+          },
+        ],
+      },
+    ];
+
+    render(<ChatMessageList messages={messages as any} isLoading onSelectPrompt={() => {}} />);
+    // Text should be visible
+    expect(screen.getByText("Your balance is")).toBeInTheDocument();
+    // But balance card should NOT appear yet
+    expect(screen.queryByText("Balance")).not.toBeInTheDocument();
+  });
+
+  it("shows tool results after streaming finishes", () => {
+    const messages = [
+      {
+        id: "msg-1",
+        role: "assistant" as const,
+        content: "Your balance is",
+        toolInvocations: [
+          {
+            toolName: "get_balance",
+            state: "result" as const,
+            args: {},
+            result: { balance: 12500.5, currency: "MYR" },
+          },
+        ],
+      },
+    ];
+
+    render(<ChatMessageList messages={messages as any} isLoading={false} onSelectPrompt={() => {}} />);
+    expect(screen.getByText("Your balance is")).toBeInTheDocument();
+    expect(screen.getByText("Balance")).toBeInTheDocument();
+  });
 });

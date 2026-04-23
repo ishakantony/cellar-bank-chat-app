@@ -166,7 +166,7 @@ export function ChatMessageList({
 
   return (
     <div ref={scrollRef} className="flex flex-col justify-end space-y-4 px-4 py-6">
-      {messages.map((msg) => {
+      {messages.map((msg, index) => {
         const structuredResults = msg.role === "assistant" ? getStructuredResultsFromMessage(msg) : [];
         const hasContent = msg.content && msg.content.trim().length > 0;
 
@@ -174,6 +174,12 @@ export function ChatMessageList({
         if (msg.role === "assistant" && !hasContent && structuredResults.length === 0) {
           return null;
         }
+
+        // Suppress tool results for the last assistant message while streaming
+        const isLastAssistantWhileStreaming =
+          isLoading &&
+          msg.role === "assistant" &&
+          index === messages.length - 1;
 
         return (
           <div
@@ -194,7 +200,7 @@ export function ChatMessageList({
               ) : hasContent ? (
                 <p>{msg.content}</p>
               ) : null}
-              {structuredResults.length > 0 && (
+              {structuredResults.length > 0 && !isLastAssistantWhileStreaming && (
                 <div className="mt-3 space-y-3">
                   {structuredResults.map((result, i) => (
                     <StructuredResult key={i} data={result} />
