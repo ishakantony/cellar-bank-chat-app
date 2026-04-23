@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat, type Message } from "ai/react";
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
@@ -49,18 +49,67 @@ function getPendingActionFromToolInvocations(message: Message | undefined): Pend
   return null;
 }
 
+function hasToolInvocations(message: Message | undefined): boolean {
+  if (!message || message.role !== "assistant") return false;
+  const toolInvocations = (message as any).toolInvocations as Array<any> | undefined;
+  return !!toolInvocations && toolInvocations.length > 0;
+}
+
 export function ChatShell() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, append, setInput } = useChat({
     api: "/api/chat",
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [messageSuggestions, setMessageSuggestions] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading]);
+
+  // Fetch suggestions when a substantive assistant response completes
+  useEffect(() => {
+    if (isLoading) return;
+
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+    if (!lastAssistant || !hasToolInvocations(lastAssistant)) return;
+    if (messageSuggestions[lastAssistant.id]) return;
+
+    async function fetchSuggestions() {
+      try {
+        const response = await fetch("/api/suggestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages }),
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (!Array.isArray(data.suggestions)) return;
+
+        // Filter out suggestions that exactly match any previous user message
+        const userMessages = messages
+          .filter((m) => m.role === "user")
+          .map((m) => m.content.trim().toLowerCase());
+
+        const filtered = data.suggestions.filter(
+          (s: string) => !userMessages.includes(s.trim().toLowerCase())
+        );
+
+        setMessageSuggestions((prev) => ({
+          ...prev,
+          [lastAssistant!.id]: filtered.slice(0, 3),
+        }));
+      } catch {
+        // Silently ignore suggestion fetch failures
+      }
+    }
+
+    fetchSuggestions();
+  }, [messages, isLoading, messageSuggestions]);
 
   const pendingAction = useMemo(() => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
@@ -106,6 +155,7 @@ export function ChatShell() {
           messages={messages}
           isLoading={isLoading}
           onSelectPrompt={onSelectPrompt}
+          suggestions={messageSuggestions}
         />
       </div>
 

@@ -122,7 +122,9 @@ function cleanJsonResponse(text: string): string {
     .trim();
 }
 
-export async function generateSuggestions(messages: Array<{ role: string; content: string }>): Promise<string[]> {
+export async function generateSuggestions(
+  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>
+): Promise<string[]> {
   const modelName = process.env.SUGGESTION_MODEL ?? "gpt-4o-mini";
   const apiKey = process.env.OPENAI_API_KEY;
   const baseURL = process.env.OPENAI_BASE_URL;

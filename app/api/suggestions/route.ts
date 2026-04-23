@@ -4,7 +4,7 @@ import { z } from "zod";
 const requestSchema = z.object({
   messages: z.array(
     z.object({
-      role: z.enum(["user", "assistant", "system", "tool"]),
+      role: z.enum(["user", "assistant", "system"]),
       content: z.string(),
     })
   ),
