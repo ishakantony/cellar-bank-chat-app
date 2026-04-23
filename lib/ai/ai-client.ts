@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, streamText, tool, type Message } from "ai";
+import { generateObject, generateText, streamText, tool, type Message } from "ai";
 import { z } from "zod";
 import {
   createCardStatusPreview,
@@ -109,6 +109,10 @@ export interface StreamAIResponseOptions {
   messages: Array<Omit<Message, "id">>;
 }
 
+const suggestionsSchema = z.object({
+  suggestions: z.array(z.string()).length(3),
+});
+
 const SUGGESTIONS_SYSTEM_PROMPT = `You are a helpful banking assistant. Based on the conversation history, generate exactly 3 suggested follow-up prompts that the USER might type next.
 
 CRITICAL RULES:
@@ -118,17 +122,8 @@ CRITICAL RULES:
 - Each prompt should be a natural, concise message the user would send (under 10 words ideally).
 - Suggestions must be relevant to banking and the conversation context.
 
-Return ONLY a JSON array of strings. No markdown, no code blocks, no explanation.
-
 GOOD examples: ["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]
 BAD examples: ["Would you like to see your transactions?", "Do you want a spending breakdown?", "Shall I show your portfolio?"]`;
-
-function cleanJsonResponse(text: string): string {
-  return text
-    .replace(/```(?:json)?\n?/g, "")
-    .replace(/```/g, "")
-    .trim();
-}
 
 export async function generateSuggestions(
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>
@@ -144,25 +139,18 @@ export async function generateSuggestions(
   });
 
   try {
-    const { text } = await generateText({
+    const { object } = await generateObject({
       model: openai(modelName),
       system: SUGGESTIONS_SYSTEM_PROMPT,
       messages,
+      schema: suggestionsSchema,
     });
 
-    const cleaned = cleanJsonResponse(text);
-
-    const parsedJson = JSON.parse(cleaned);
-    if (Array.isArray(parsedJson)) {
-      return parsedJson
-        .filter((item): item is string => typeof item === "string")
-        .slice(0, 3);
-    }
-  } catch {
-    // Invalid JSON from model or generateText error — fall back to empty array
+    return object.suggestions.slice(0, 3);
+  } catch (error) {
+    console.error("Error generating suggestions. Returning empty suggestions.", error);
+    return [];
   }
-
-  return [];
 }
 
 export async function streamAIResponse(options: StreamAIResponseOptions) {

@@ -9,11 +9,15 @@ vi.mock("@/lib/ai/ai-client", () => ({
 import { POST } from "@/app/api/suggestions/route";
 
 describe("POST /api/suggestions", () => {
+  beforeEach(() => {
+    mockGenerateSuggestions.mockReset();
+  });
+
   it("returns suggestions when generateSuggestions returns an array", async () => {
     mockGenerateSuggestions.mockResolvedValue([
-      "What is my balance?",
-      "How do I transfer money?",
-      "Show my recent transactions",
+      "Show me my recent transactions",
+      "What did I spend this month?",
+      "How is my portfolio doing?",
     ]);
 
     const response = await POST(
@@ -28,7 +32,7 @@ describe("POST /api/suggestions", () => {
     expect(response.status).toBe(200);
     const json = await response.json();
     expect(json.suggestions).toHaveLength(3);
-    expect(json.suggestions[0]).toBe("What is my balance?");
+    expect(json.suggestions[0]).toBe("Show me my recent transactions");
   });
 
   it("returns empty array when generateSuggestions returns an empty array", async () => {
