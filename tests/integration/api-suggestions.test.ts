@@ -1,55 +1,64 @@
-import { describe, expect, it, vi } from "vitest";
-
-const mockGenerateSuggestions = vi.fn();
-
-vi.mock("@/lib/ai/ai-client", () => ({
-  generateSuggestions: (...args: any[]) => mockGenerateSuggestions(...args),
-}));
-
+import { describe, expect, it } from "vitest";
 import { POST } from "@/app/api/suggestions/route";
 
 describe("POST /api/suggestions", () => {
-  beforeEach(() => {
-    mockGenerateSuggestions.mockReset();
-  });
-
-  it("returns suggestions when generateSuggestions returns an array", async () => {
-    mockGenerateSuggestions.mockResolvedValue([
-      "Show me my recent transactions",
-      "What did I spend this month?",
-      "How is my portfolio doing?",
-    ]);
-
+  it("returns suggestions when tool invocations are present", async () => {
     const response = await POST(
       new Request("http://localhost/api/suggestions", {
         method: "POST",
         body: JSON.stringify({
-          messages: [{ role: "user", content: "Help me with my account" }],
+          messages: [
+            { role: "user", content: "Help me with my account" },
+            {
+              role: "assistant",
+              content: "Your balance is RM 5,000.",
+              toolInvocations: [
+                { toolName: "get_balance", state: "result" },
+              ],
+            },
+          ],
         }),
       })
     );
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.suggestions).toHaveLength(3);
-    expect(json.suggestions[0]).toBe("Show me my recent transactions");
+    expect(Array.isArray(json.suggestions)).toBe(true);
+    expect(json.suggestions.length).toBeGreaterThan(0);
+    expect(json.suggestions.length).toBeLessThanOrEqual(3);
+    // All returned suggestions should be from the get_balance pool or universal pool
+    const validSuggestions = [
+      "What's my savings account balance?",
+      "Show me my total net worth",
+      "How much did I spend this month?",
+      "Show me my account breakdown",
+      "Show my account summary",
+      "What can you help me with?",
+    ];
+    for (const suggestion of json.suggestions) {
+      expect(validSuggestions).toContain(suggestion);
+    }
   });
 
-  it("returns empty array when generateSuggestions returns an empty array", async () => {
-    mockGenerateSuggestions.mockResolvedValue([]);
-
+  it("returns universal suggestions when no tool invocations are present", async () => {
     const response = await POST(
       new Request("http://localhost/api/suggestions", {
         method: "POST",
         body: JSON.stringify({
-          messages: [{ role: "user", content: "Hello" }],
+          messages: [
+            { role: "user", content: "Hello" },
+            { role: "assistant", content: "Hello! How can I help?" },
+          ],
         }),
       })
     );
 
     expect(response.status).toBe(200);
     const json = await response.json();
-    expect(json.suggestions).toEqual([]);
+    // Universal suggestions are always included even without tool invocations
+    expect(json.suggestions.length).toBeGreaterThan(0);
+    expect(json.suggestions).toContain("Show my account summary");
+    expect(json.suggestions).toContain("What can you help me with?");
   });
 
   it("returns 400 with empty array when request body is not valid JSON", async () => {
@@ -89,23 +98,6 @@ describe("POST /api/suggestions", () => {
     );
 
     expect(response.status).toBe(400);
-    const json = await response.json();
-    expect(json.suggestions).toEqual([]);
-  });
-
-  it("returns 500 with empty array when generateSuggestions throws", async () => {
-    mockGenerateSuggestions.mockRejectedValue(new Error("model unavailable"));
-
-    const response = await POST(
-      new Request("http://localhost/api/suggestions", {
-        method: "POST",
-        body: JSON.stringify({
-          messages: [{ role: "user", content: "Hello" }],
-        }),
-      })
-    );
-
-    expect(response.status).toBe(500);
     const json = await response.json();
     expect(json.suggestions).toEqual([]);
   });

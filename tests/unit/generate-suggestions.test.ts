@@ -1,117 +1,65 @@
-import { describe, expect, it, vi } from "vitest";
-
-const mockGenerateText = vi.fn();
-
-vi.mock("ai", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("ai")>();
-  return {
-    ...actual,
-    generateText: (...args: any[]) => mockGenerateText(...args),
-  };
-});
-
-vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI: () => (model: string) => ({ id: model }),
-}));
-
+import { describe, expect, it } from "vitest";
 import { generateSuggestions } from "@/lib/ai/ai-client";
 
+const CANDIDATE_POOL = [
+  "Show me my recent transactions",
+  "What did I spend this month?",
+  "How is my portfolio doing?",
+  "What's my balance?",
+  "Send money to a contact",
+];
+
 describe("generateSuggestions", () => {
-  beforeEach(() => {
-    mockGenerateText.mockReset();
-  });
-
-  it("returns parsed suggestions when model returns valid JSON array", async () => {
-    mockGenerateText.mockResolvedValue({
-      text: '["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]',
-    });
-
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
-
-    expect(result).toEqual([
-      "Show me my recent transactions",
-      "What did I spend this month?",
-      "How is my portfolio doing?",
-    ]);
-  });
-
-  it("returns empty array when model returns invalid JSON", async () => {
-    mockGenerateText.mockResolvedValue({ text: "not valid json at all" });
-
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
+  it("returns empty array when candidate pool is empty", () => {
+    const result = generateSuggestions(
+      [{ role: "user", content: "Hello" }],
+      []
+    );
 
     expect(result).toEqual([]);
   });
 
-  it("returns suggestions from markdown code block", async () => {
-    mockGenerateText.mockResolvedValue({
-      text: '```json\n["Show me my recent transactions", "What did I spend this month?"]\n```',
-    });
+  it("returns up to 3 suggestions from the candidate pool", () => {
+    const result = generateSuggestions(
+      [{ role: "user", content: "Hello" }],
+      CANDIDATE_POOL
+    );
 
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
-
-    expect(result).toEqual([
-      "Show me my recent transactions",
-      "What did I spend this month?",
-    ]);
+    expect(result.length).toBeLessThanOrEqual(3);
+    expect(result.length).toBeGreaterThan(0);
+    // Every returned suggestion must exist in the candidate pool
+    for (const suggestion of result) {
+      expect(CANDIDATE_POOL).toContain(suggestion);
+    }
   });
 
-  it("extracts JSON array from surrounding text", async () => {
-    mockGenerateText.mockResolvedValue({
-      text: 'Here are your suggestions:\n\n["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]\n\nHope that helps!',
-    });
+  it("returns all suggestions when pool has fewer than 3 items", () => {
+    const smallPool = ["Only one suggestion"];
+    const result = generateSuggestions(
+      [{ role: "user", content: "Hello" }],
+      smallPool
+    );
 
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
-
-    expect(result).toEqual([
-      "Show me my recent transactions",
-      "What did I spend this month?",
-      "How is my portfolio doing?",
-    ]);
+    expect(result).toEqual(["Only one suggestion"]);
   });
 
-  it("extracts suggestions from JSON object", async () => {
-    mockGenerateText.mockResolvedValue({
-      text: '{"suggestions": ["Show me my recent transactions", "What did I spend this month?"]}',
-    });
+  it("returns exactly 3 when pool has 3 or more items", () => {
+    const result = generateSuggestions(
+      [{ role: "user", content: "Hello" }],
+      CANDIDATE_POOL
+    );
 
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
-
-    expect(result).toEqual([
-      "Show me my recent transactions",
-      "What did I spend this month?",
-    ]);
+    expect(result).toHaveLength(3);
   });
 
-  it("filters non-string items and limits to 3", async () => {
-    mockGenerateText.mockResolvedValue({
-      text: '["Valid", 123, null, "Also valid", "Extra", "Another extra"]',
-    });
+  it("returns different suggestions across calls (probabilistic)", () => {
+    const results: string[][] = [];
+    for (let i = 0; i < 20; i++) {
+      results.push(generateSuggestions([{ role: "user", content: "Hello" }], CANDIDATE_POOL));
+    }
 
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
-
-    expect(result).toEqual(["Valid", "Also valid", "Extra"]);
-  });
-
-  it("returns empty array when generateText throws", async () => {
-    mockGenerateText.mockRejectedValue(new Error("model error"));
-
-    const result = await generateSuggestions([
-      { role: "user", content: "Hello" },
-    ]);
-
-    expect(result).toEqual([]);
+    // With 5 items and 20 shuffles, we should see variety
+    const uniqueFirstItems = new Set(results.map((r) => r[0]));
+    expect(uniqueFirstItems.size).toBeGreaterThan(1);
   });
 });

@@ -109,118 +109,22 @@ export interface StreamAIResponseOptions {
   messages: Array<Omit<Message, "id">>;
 }
 
-const SUGGESTIONS_SYSTEM_PROMPT = `You are a helpful banking assistant. Based on the conversation history, generate exactly 3 suggested follow-up prompts that the USER might type next.
-
-CRITICAL RULES:
-- Write each prompt FROM THE USER'S PERSPECTIVE, as if the user is typing it into the chat.
-- Use first-person language: "Show me...", "What is my...", "How much did I spend..."
-- NEVER phrase suggestions as questions TO the user. Avoid: "Would you like...", "Do you want...", "Are you interested in..."
-- Each prompt should be a natural, concise message the user would send (under 10 words ideally).
-- Suggestions must be relevant to banking and the conversation context.
-
-OUTPUT FORMAT — You MUST return ONLY a raw JSON array. No markdown, no code blocks, no explanations, no extra text.
-
-CORRECT output:
-["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]
-
-INCORRECT output:
-Here are your suggestions: ["Show me my recent transactions"]
-\`\`\`json
-["Show me my recent transactions"]
-\`\`\`
-{"suggestions": ["Show me my recent transactions"]}`;
-
-function extractJsonArray(text: string): unknown {
-  // Strategy 1: Try parsing the whole thing as JSON
-  try {
-    return JSON.parse(text.trim());
-  } catch {
-    // continue
-  }
-
-  // Strategy 2: Strip markdown code fences and try again
-  const withoutFences = text
-    .replace(/```(?:json)?\s*/gi, "")
-    .replace(/```\s*/g, "")
-    .trim();
-  try {
-    return JSON.parse(withoutFences);
-  } catch {
-    // continue
-  }
-
-  // Strategy 3: Extract first JSON array from the text
-  const arrayMatch = text.match(/\[[\s\S]*?\]/);
-  if (arrayMatch) {
-    try {
-      return JSON.parse(arrayMatch[0]);
-    } catch {
-      // continue
-    }
-  }
-
-  // Strategy 4: Extract first JSON object from the text
-  const objectMatch = text.match(/\{[\s\S]*?\}/);
-  if (objectMatch) {
-    try {
-      return JSON.parse(objectMatch[0]);
-    } catch {
-      // continue
-    }
-  }
-
-  return undefined;
-}
-
-function normalizeSuggestions(parsed: unknown): string[] {
-  if (Array.isArray(parsed)) {
-    return parsed
-      .filter((item): item is string => typeof item === "string")
-      .slice(0, 3);
-  }
-
-  if (parsed && typeof parsed === "object" && "suggestions" in parsed) {
-    const suggestions = (parsed as Record<string, unknown>).suggestions;
-    if (Array.isArray(suggestions)) {
-      return suggestions
-        .filter((item): item is string => typeof item === "string")
-        .slice(0, 3);
-    }
-  }
-
-  return [];
-}
-
-export async function generateSuggestions(
-  messages: Array<{ role: "user" | "assistant" | "system"; content: string }>
-): Promise<string[]> {
-  const modelName = process.env.SUGGESTION_MODEL ?? "gpt-4o-mini";
-  const apiKey = process.env.OPENAI_API_KEY;
-  const baseURL = process.env.OPENAI_BASE_URL;
-
-  const openai = createOpenAI({
-    apiKey,
-    baseURL,
-    compatibility: "compatible",
-  });
-
-  try {
-    const { text } = await generateText({
-      model: openai(modelName),
-      system: SUGGESTIONS_SYSTEM_PROMPT,
-      messages,
-    });
-
-    const parsed = extractJsonArray(text);
-    if (parsed !== undefined) {
-      return normalizeSuggestions(parsed);
-    }
-
-    return [];
-  } catch (error) {
-    console.error("Error generating suggestions. Returning empty suggestions.", error);
+export function generateSuggestions(
+  _messages: Array<{ role: "user" | "assistant" | "system"; content: string }>,
+  candidatePool: string[]
+): string[] {
+  if (candidatePool.length === 0) {
     return [];
   }
+
+  // Shuffle the candidate pool using Fisher-Yates and return up to 3
+  const shuffled = [...candidatePool];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.slice(0, 3);
 }
 
 export async function streamAIResponse(options: StreamAIResponseOptions) {
