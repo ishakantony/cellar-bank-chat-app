@@ -109,11 +109,19 @@ export interface StreamAIResponseOptions {
   messages: Array<Omit<Message, "id">>;
 }
 
-const SUGGESTIONS_SYSTEM_PROMPT = `You are a helpful banking assistant. Based on the conversation history, generate exactly 3 contextual follow-up questions that a user might want to ask next.
+const SUGGESTIONS_SYSTEM_PROMPT = `You are a helpful banking assistant. Based on the conversation history, generate exactly 3 suggested follow-up prompts that the USER might type next.
 
-Return ONLY a JSON array of strings. Do not include markdown formatting, code blocks, or any other text.
+CRITICAL RULES:
+- Write each prompt FROM THE USER'S PERSPECTIVE, as if the user is typing it into the chat.
+- Use first-person language: "Show me...", "What is my...", "How much did I spend..."
+- NEVER phrase suggestions as questions TO the user. Avoid: "Would you like...", "Do you want...", "Are you interested in..."
+- Each prompt should be a natural, concise message the user would send (under 10 words ideally).
+- Suggestions must be relevant to banking and the conversation context.
 
-Example: ["What is my balance?", "How do I transfer money?", "Show my recent transactions"]`;
+Return ONLY a JSON array of strings. No markdown, no code blocks, no explanation.
+
+GOOD examples: ["Show me my recent transactions", "What did I spend this month?", "How is my portfolio doing?"]
+BAD examples: ["Would you like to see your transactions?", "Do you want a spending breakdown?", "Shall I show your portfolio?"]`;
 
 function cleanJsonResponse(text: string): string {
   return text
