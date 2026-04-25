@@ -4,15 +4,43 @@
 
 @layer base {
   :root {
-    --bg-base: #0a0a0a;
-    --bg-surface: #171717;
-    --bg-elevated: #262626;
-    --accent: #14b8a6;
+    --bg-base: #02080f;
+    --bg-shell: #0b1829;
+    --bg-surface: #0f1f35;
+    --bg-elevated: #152035;
+    --accent: #20cba8;
+  }
+
+  html {
+    background: var(--bg-base);
   }
 
   body {
     @apply bg-chat-base text-white;
+    background:
+      radial-gradient(circle at 18% -10%, rgba(32, 203, 168, 0.14), transparent 28rem),
+      radial-gradient(circle at 92% 8%, rgba(15, 31, 53, 0.9), transparent 22rem),
+      linear-gradient(180deg, #06101d 0%, var(--bg-base) 42%, #02060c 100%);
     -webkit-tap-highlight-color: transparent;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.24;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent 72%);
+  }
+
+  button,
+  input {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chat-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-chat-base;
   }
 }
 

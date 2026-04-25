@@ -10,20 +10,20 @@ export function BaseChart({ option }: BaseChartProps) {
   const themedOption = {
     backgroundColor: "transparent",
     textStyle: {
-      color: "#e5e5e5",
+      color: "rgba(255,255,255,0.78)",
     },
     title: {
       textStyle: { color: "#ffffff" },
       ...option.title,
     },
     legend: {
-      textStyle: { color: "#a3a3a3" },
+      textStyle: { color: "rgba(255,255,255,0.52)" },
       ...option.legend,
     },
     tooltip: {
-      backgroundColor: "#262626",
-      borderColor: "#404040",
-      textStyle: { color: "#e5e5e5" },
+      backgroundColor: "#152035",
+      borderColor: "rgba(255,255,255,0.12)",
+      textStyle: { color: "rgba(255,255,255,0.86)" },
       ...option.tooltip,
     },
     ...option,

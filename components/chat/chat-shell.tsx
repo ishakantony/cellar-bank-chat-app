@@ -134,16 +134,16 @@ export function ChatShell() {
   );
 
   return (
-    <div className="flex h-screen flex-col bg-chat-base text-white">
+    <div className="relative z-10 flex h-screen flex-col overflow-hidden bg-chat-base/95 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)]">
       {/* App Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/5 px-4">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-chat-surface/92 px-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-chat-accent text-sm font-bold text-chat-base">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-chat-accent text-sm font-extrabold text-chat-base shadow-[0_0_24px_rgba(32,203,168,0.22)]">
             C
           </div>
-          <span className="text-base font-semibold tracking-tight">Cellar Bank</span>
+          <span className="text-base font-semibold tracking-tight text-white">Cellar Bank</span>
         </div>
-        <div className="h-8 w-8 rounded-full bg-chat-elevated" aria-hidden="true" />
+        <div className="h-8 w-8 rounded-full border border-white/10 bg-chat-elevated/75 shadow-inner shadow-white/5" aria-hidden="true" />
       </header>
 
       {/* Scrollable Messages */}

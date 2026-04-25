@@ -147,7 +147,7 @@ export function ChatMessageList({
           <h2 className="text-2xl font-semibold text-white">
             {greeting}, {DEMO_ACCOUNT.userName}
           </h2>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-white/52">
             How can I help with your banking today?
           </p>
         </div>
@@ -157,7 +157,7 @@ export function ChatMessageList({
         </div>
 
         <div className="w-full max-w-sm space-y-3">
-          <p className="px-1 text-xs font-medium uppercase tracking-wider text-neutral-500">
+          <p className="px-1 text-xs font-semibold uppercase tracking-wider text-white/35">
             Suggestions
           </p>
           <SuggestedPrompts prompts={SUGGESTED_PROMPTS} onSelect={onSelectPrompt} />
@@ -203,8 +203,8 @@ export function ChatMessageList({
               <div
                 className={`px-4 py-3 text-[15px] leading-relaxed ${
                   msg.role === "user"
-                    ? "rounded-2xl rounded-tr-sm bg-teal-600 text-white"
-                    : "rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated text-neutral-100"
+                    ? "rounded-[18px] rounded-tr-md bg-chat-accent text-chat-base shadow-[0_10px_28px_rgba(32,203,168,0.18)]"
+                    : "rounded-[18px] rounded-tl-md border border-white/10 bg-chat-elevated text-white/90 shadow-[0_12px_34px_rgba(0,0,0,0.22)]"
                 }`}
               >
                 {hasContent && msg.role === "assistant" ? (
@@ -243,7 +243,7 @@ export function ChatMessageList({
         if (!isThinking) return null;
         return (
           <div className="flex animate-message-in justify-start">
-            <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-white/5 bg-chat-elevated px-4 py-3 text-[15px] leading-relaxed text-neutral-100">
+            <div className="max-w-[85%] rounded-[18px] rounded-tl-md border border-white/10 bg-chat-elevated px-4 py-3 text-[15px] leading-relaxed text-white/90 shadow-[0_12px_34px_rgba(0,0,0,0.22)]">
               <span className="inline-flex items-center gap-1">
                 <span className="animate-thinking-pulse">Thinking</span>
                 <span className="inline-flex">

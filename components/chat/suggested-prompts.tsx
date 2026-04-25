@@ -17,8 +17,8 @@ export function SuggestedPrompts({
           onClick={() => onSelect(prompt)}
           className={
             isPill
-              ? "rounded-full border border-white/10 bg-chat-elevated px-3 py-1.5 text-sm text-neutral-300 transition-all hover:brightness-110 hover:scale-[1.02] animate-fade-in"
-              : "w-full rounded-xl border border-white/5 bg-neutral-800/50 px-4 py-3 text-left text-sm text-neutral-300 transition-colors hover:bg-neutral-800 active:bg-neutral-700"
+              ? "animate-fade-in rounded-full border border-white/10 bg-chat-elevated/90 px-3 py-1.5 text-sm text-white/72 shadow-[0_8px_22px_rgba(0,0,0,0.18)] transition-all hover:scale-[1.02] hover:border-chat-accent/35 hover:bg-chat-accentSoft/65 hover:text-white active:scale-[0.98]"
+              : "w-full rounded-[14px] border border-white/10 bg-chat-surface/72 px-4 py-3 text-left text-sm text-white/72 shadow-[0_10px_26px_rgba(0,0,0,0.16)] transition-all hover:border-chat-accent/35 hover:bg-chat-elevated active:scale-[0.99]"
           }
           style={isPill ? { animationDelay: `${index * 50}ms` } : undefined}
         >

@@ -9,10 +9,14 @@ const config: Config = {
     extend: {
       colors: {
         chat: {
-          base: "#0a0a0a",
-          surface: "#171717",
-          elevated: "#262626",
-          accent: "#14b8a6",
+          base: "#02080f",
+          shell: "#0b1829",
+          surface: "#0f1f35",
+          elevated: "#152035",
+          accent: "#20cba8",
+          accentSoft: "#123d3b",
+          line: "rgba(255,255,255,0.1)",
+          muted: "rgba(255,255,255,0.52)",
         },
       },
       fontFamily: {

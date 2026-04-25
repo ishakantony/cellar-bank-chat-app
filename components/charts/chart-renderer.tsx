@@ -8,12 +8,12 @@ interface ChartRendererProps {
 
 export function ChartRenderer({ data }: ChartRendererProps) {
   return (
-    <div className="rounded-xl border border-white/5 bg-chat-surface p-4">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
+    <div className="rounded-[14px] border border-white/10 bg-chat-surface/80 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.22)]">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/42">
         {data.title}
       </p>
       {data.description && (
-        <p className="mb-3 text-sm text-neutral-300">{data.description}</p>
+        <p className="mb-3 text-sm text-white/68">{data.description}</p>
       )}
       {data.mode === "structured" ? (
         <StructuredChart

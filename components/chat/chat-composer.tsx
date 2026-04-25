@@ -16,9 +16,9 @@ export function ChatComposer({
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-white/5 bg-chat-base/80 p-4 backdrop-blur-md"
+      className="border-t border-white/10 bg-chat-surface/90 p-4 shadow-[0_-18px_42px_rgba(0,0,0,0.28)] backdrop-blur-md"
     >
-      <div className="flex items-center gap-2 rounded-3xl border border-white/10 bg-chat-surface px-4 py-3 transition-colors focus-within:border-teal-500/40">
+      <div className="flex items-center gap-2 rounded-3xl border border-white/10 bg-white/[0.065] px-4 py-3 shadow-inner shadow-white/[0.03] transition-colors focus-within:border-chat-accent/50 focus-within:bg-white/[0.085]">
         <input
           type="text"
           name="prompt"
@@ -26,13 +26,13 @@ export function ChatComposer({
           onChange={handleInputChange}
           placeholder="Ask about your money..."
           disabled={disabled}
-          className="min-h-[24px] flex-1 bg-transparent text-[16px] text-white placeholder:text-neutral-500 focus:outline-none"
+          className="min-h-[24px] flex-1 bg-transparent text-[16px] text-white placeholder:text-white/30 focus:outline-none disabled:cursor-not-allowed"
         />
         <button
           type="submit"
           disabled={disabled || !input.trim()}
           aria-label="Send"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-600 text-white transition-colors hover:bg-teal-500 disabled:opacity-30 disabled:hover:bg-teal-600"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-chat-accent text-chat-base shadow-[0_0_20px_rgba(32,203,168,0.26)] transition-all hover:bg-[#35d8b8] active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-chat-accent"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
