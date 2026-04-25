@@ -32,3 +32,32 @@ All chat messages are streamed through the LLM using the Vercel AI SDK. The mode
 
 - `npm test`
 - `npm run test:e2e`
+
+## PWA testing on a phone with ngrok
+
+Build and start the production app:
+
+```bash
+npm run build
+npm run start
+```
+
+In a second terminal, expose the local server over HTTPS:
+
+```bash
+brew install ngrok/ngrok/ngrok
+ngrok http 3000
+```
+
+Open the HTTPS forwarding URL from ngrok on your phone, for example:
+
+```text
+https://abc123.ngrok-free.app
+```
+
+Install the app from the browser:
+
+- Android Chrome: menu -> **Add to Home screen** or **Install app**
+- iPhone Safari: Share -> **Add to Home Screen**
+
+Launch Cellar Bank from the home screen and verify it opens in standalone mode. Chat should work while online. After opening once, turn on airplane mode and relaunch; the app shell should still appear, but sending chat messages requires network access.

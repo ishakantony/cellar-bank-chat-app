@@ -7,6 +7,8 @@ import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import type { PendingAction } from "@/lib/types/chat";
 
+const PWA_BUILD_LABEL = "PWA v2";
+
 function getPendingActionFromToolInvocations(message: Message | undefined): PendingAction | null {
   if (!message || message.role !== "assistant") return null;
   const toolInvocations = (message as any).toolInvocations as Array<{
@@ -61,7 +63,27 @@ export function ChatShell() {
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
   const [messageSuggestions, setMessageSuggestions] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      setIsStandalone(Boolean((window.navigator as any).standalone));
+      return;
+    }
+
+    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
+    const updateStandaloneMode = () => {
+      setIsStandalone(standaloneQuery.matches || Boolean((window.navigator as any).standalone));
+    };
+
+    updateStandaloneMode();
+    standaloneQuery.addEventListener("change", updateStandaloneMode);
+
+    return () => {
+      standaloneQuery.removeEventListener("change", updateStandaloneMode);
+    };
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -134,9 +156,9 @@ export function ChatShell() {
   );
 
   return (
-    <main className="relative z-10 mx-auto flex h-screen w-full max-w-[500px] flex-col overflow-hidden bg-chat-base/95 text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)]">
+    <main className="fixed inset-0 z-10 mx-auto flex w-full max-w-[500px] flex-col overflow-hidden overscroll-none bg-chat-base/95 pt-[env(safe-area-inset-top)] text-white shadow-[0_24px_90px_rgba(0,0,0,0.38)]">
       {/* App Header */}
-      <header className="flex h-14 shrink-0 items-center border-b border-white/10 bg-chat-surface/92 px-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-chat-surface/92 px-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md">
         <div className="flex items-center gap-2.5">
           <img
             src="/logo.svg"
@@ -146,6 +168,34 @@ export function ChatShell() {
           />
           <span className="text-base font-semibold tracking-tight text-white">Cellar Bank</span>
         </div>
+        {isStandalone && (
+          <div className="flex items-center gap-2">
+            <span className="rounded-full border border-chat-accent/20 bg-chat-accent/10 px-2 py-1 text-[11px] font-semibold leading-none text-chat-accent">
+              {PWA_BUILD_LABEL}
+            </span>
+            <button
+              type="button"
+              aria-label="Refresh app"
+              onClick={() => window.location.reload()}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.065] text-white/80 transition-colors hover:bg-white/[0.1] hover:text-white active:scale-95"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                <path d="M21 3v6h-6" />
+              </svg>
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Scrollable Messages */}
