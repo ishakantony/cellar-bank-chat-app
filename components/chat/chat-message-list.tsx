@@ -4,7 +4,6 @@ import type { Message } from "ai/react";
 import { useEffect, useRef } from "react";
 import { DEMO_ACCOUNT } from "@/lib/mock-data/account";
 import { SUGGESTED_PROMPTS } from "@/lib/chat/constants";
-import { AccountSummaryCard } from "@/components/chat/account-summary-card";
 import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { StructuredResult } from "@/components/chat/structured-result";
 import { MarkdownText } from "@/components/chat/markdown-text";
@@ -142,8 +141,14 @@ export function ChatMessageList({
       hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
     return (
-      <div className="flex h-full flex-col items-center justify-center px-6 py-12 animate-fade-in">
-        <div className="mb-8 text-center">
+      <div className="flex h-full flex-col items-center justify-center px-6 py-10 animate-fade-in">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <img
+            src="/logo.svg"
+            alt=""
+            aria-hidden="true"
+            className="mb-5 h-14 w-14 rounded-[14px] border border-white/10 shadow-[0_16px_38px_rgba(0,0,0,0.28)]"
+          />
           <h2 className="text-2xl font-semibold text-white">
             {greeting}, {DEMO_ACCOUNT.userName}
           </h2>
@@ -152,15 +157,12 @@ export function ChatMessageList({
           </p>
         </div>
 
-        <div className="mb-8 w-full max-w-sm">
-          <AccountSummaryCard />
-        </div>
-
-        <div className="w-full max-w-sm space-y-3">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wider text-white/35">
-            Suggestions
-          </p>
-          <SuggestedPrompts prompts={SUGGESTED_PROMPTS} onSelect={onSelectPrompt} />
+        <div className="w-full max-w-sm">
+          <SuggestedPrompts
+            prompts={SUGGESTED_PROMPTS.slice(0, 4)}
+            onSelect={onSelectPrompt}
+            variant="compact"
+          />
         </div>
       </div>
     );

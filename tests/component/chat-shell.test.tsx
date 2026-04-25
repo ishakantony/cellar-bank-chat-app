@@ -19,9 +19,10 @@ describe("HomePage", () => {
     expect(screen.getByText("Cellar Bank")).toBeInTheDocument();
   });
 
-  it("shows suggested prompts and the account summary card", () => {
+  it("shows the personalized empty state and starter prompts", () => {
     render(<HomePage />);
-    expect(screen.getByText(/everyday savings/i)).toBeInTheDocument();
+    expect(screen.getByText(/good (morning|afternoon|evening), ishak/i)).toBeInTheDocument();
+    expect(screen.queryByText(/everyday savings/i)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /what's my balance/i }),
     ).toBeInTheDocument();
