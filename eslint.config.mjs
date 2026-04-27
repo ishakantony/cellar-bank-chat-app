@@ -14,14 +14,6 @@ const eslintConfig = [
   },
   ...nextCoreWebVitals,
   ...nextTypescript,
-  {
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": "warn",
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/error-boundaries": "warn",
-    },
-  },
 ];
 
 export default eslintConfig;

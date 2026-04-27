@@ -1,10 +1,11 @@
 import { chartRegistry } from "@/lib/charts/registry";
 import { ChartFallback } from "./chart-fallback";
+import type { ChartDataPoint } from "@/lib/types/chat";
 
 interface StructuredChartProps {
   chartType: string;
   title: string;
-  data: any[];
+  data: ChartDataPoint[];
 }
 
 export function StructuredChart({ chartType, title, data }: StructuredChartProps) {

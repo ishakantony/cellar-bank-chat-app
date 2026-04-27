@@ -1,12 +1,13 @@
 "use client";
 
 import { BaseChart } from "./base-chart";
+import type { ChartDataPoint } from "@/lib/types/chat";
 
-export function DonutChart({ data }: { data: any[] }) {
+export function DonutChart({ data }: { data: ChartDataPoint[] }) {
   const option = {
     series: [
       {
-        type: "pie",
+        type: "pie" as const,
         radius: ["40%", "70%"],
         data,
         label: { color: "#e5e5e5" },

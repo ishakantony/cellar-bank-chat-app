@@ -1,25 +1,44 @@
 "use client";
 
+import { Component, type ReactNode } from "react";
+import type { EChartsOption } from "echarts";
 import { BaseChart } from "./base-chart";
 import { ChartFallback } from "./chart-fallback";
-import { useState } from "react";
 
 interface CustomChartProps {
   title: string;
-  echartsOption: any;
+  echartsOption: Record<string, unknown>;
+}
+
+interface ChartErrorBoundaryProps {
+  fallback: ReactNode;
+  children: ReactNode;
+}
+
+class ChartErrorBoundary extends Component<
+  ChartErrorBoundaryProps,
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
 }
 
 export function CustomChart({ title, echartsOption }: CustomChartProps) {
-  const [hasError, setHasError] = useState(false);
-
-  if (hasError) {
-    return <ChartFallback title={title} rawData={echartsOption} />;
-  }
-
-  try {
-    return <BaseChart option={echartsOption} />;
-  } catch {
-    setHasError(true);
-    return <ChartFallback title={title} rawData={echartsOption} />;
-  }
+  return (
+    <ChartErrorBoundary
+      fallback={<ChartFallback title={title} rawData={echartsOption} />}
+    >
+      <BaseChart option={echartsOption as EChartsOption} />
+    </ChartErrorBoundary>
+  );
 }

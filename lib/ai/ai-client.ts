@@ -1,5 +1,5 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateText, streamText, tool, type Message } from "ai";
+import { streamText, tool, type Message } from "ai";
 import { z } from "zod";
 import {
   createCardStatusPreview,

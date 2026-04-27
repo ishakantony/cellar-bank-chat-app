@@ -1,22 +1,83 @@
 "use client";
 
 import type { Message } from "ai/react";
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { DEMO_ACCOUNT } from "@/lib/mock-data/account";
 import { SUGGESTED_PROMPTS } from "@/lib/chat/constants";
 import { SuggestedPrompts } from "@/components/chat/suggested-prompts";
 import { StructuredResult } from "@/components/chat/structured-result";
 import { MarkdownText } from "@/components/chat/markdown-text";
-import type { ChartPayload, StructuredResult as StructuredResultType } from "@/lib/types/chat";
+import type {
+  ChartPayload,
+  ChartDataPoint,
+  StructuredResult as StructuredResultType,
+} from "@/lib/types/chat";
 
-function buildPortfolioSummary(result: any): StructuredResultType {
-  const holdings = result.holdings || [];
-  const totalValue = result.totalValue || holdings.reduce((sum: number, h: any) => sum + (h.value || 0), 0);
-  const totalCost = result.totalCost || holdings.reduce((sum: number, h: any) => sum + (h.quantity || 0) * (h.avgCost || 0), 0);
-  const unrealizedPnl = result.unrealizedPnl || (totalValue - totalCost);
-  const unrealizedPnlPercent = result.unrealizedPnlPercent || (totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0);
+type Holding = {
+  ticker?: string;
+  name?: string;
+  quantity?: number;
+  avgCost?: number;
+  currentPrice?: number;
+  currency?: string;
+  value?: number;
+  pnlPercent?: number;
+};
 
-  const holdingsSorted = [...holdings].sort((a: any, b: any) => (b.value || 0) - (a.value || 0));
+type PortfolioToolResult = {
+  holdings?: Holding[];
+  totalValue?: number;
+  totalCost?: number;
+  unrealizedPnl?: number;
+  unrealizedPnlPercent?: number;
+  currency?: string;
+  riskMetrics?: { beta: number; volatility: number; sharpeRatio: number };
+  charts?: ChartPayload[];
+};
+
+type ChartToolArgs = {
+  mode?: "structured" | "custom";
+  chartType?: string;
+  title?: string;
+  description?: string;
+  data?: ChartDataPoint[];
+  echartsOption?: Record<string, unknown>;
+};
+
+type BalanceToolResult = { balance: number; currency: string };
+type TransactionsToolResult = {
+  items: Array<{
+    id: string;
+    merchant: string;
+    amount: number;
+    direction: "debit" | "credit";
+    postedAt: string;
+  }>;
+};
+type SpendingToolResult = {
+  monthLabel: string;
+  total: number;
+  topCategory: string;
+  comparisonText: string;
+};
+type ConfirmationToolResult = { confirmationText: string };
+
+function buildPortfolioSummary(result: PortfolioToolResult): StructuredResultType {
+  const holdings = result.holdings ?? [];
+  const totalValue =
+    result.totalValue ?? holdings.reduce((sum, h) => sum + (h.value ?? 0), 0);
+  const totalCost =
+    result.totalCost ??
+    holdings.reduce((sum, h) => sum + (h.quantity ?? 0) * (h.avgCost ?? 0), 0);
+  const unrealizedPnl = result.unrealizedPnl ?? totalValue - totalCost;
+  const unrealizedPnlPercent =
+    result.unrealizedPnlPercent ??
+    (totalCost > 0 ? (unrealizedPnl / totalCost) * 100 : 0);
+
+  const holdingsSorted = [...holdings].sort(
+    (a, b) => (b.value ?? 0) - (a.value ?? 0)
+  );
 
   return {
     type: "portfolio",
@@ -25,13 +86,14 @@ function buildPortfolioSummary(result: any): StructuredResultType {
       totalCost: Math.round(totalCost * 100) / 100,
       unrealizedPnl: Math.round(unrealizedPnl * 100) / 100,
       unrealizedPnlPercent: Math.round(unrealizedPnlPercent * 100) / 100,
-      currency: result.currency || holdings[0]?.currency || "MYR",
-      topHoldings: holdingsSorted.slice(0, 3).map((h: any) => ({
-        name: h.name || h.ticker,
-        value: Math.round((h.value || 0) * 100) / 100,
-        pnlPercent: Math.round((h.pnlPercent || 0) * 100) / 100,
+      currency: result.currency ?? holdings[0]?.currency ?? "MYR",
+      topHoldings: holdingsSorted.slice(0, 3).map((h) => ({
+        name: h.name ?? h.ticker ?? "",
+        value: Math.round((h.value ?? 0) * 100) / 100,
+        pnlPercent: Math.round((h.pnlPercent ?? 0) * 100) / 100,
       })),
-      riskMetrics: result.riskMetrics || { beta: 0, volatility: 0, sharpeRatio: 0 },
+      riskMetrics:
+        result.riskMetrics ?? { beta: 0, volatility: 0, sharpeRatio: 0 },
     },
   };
 }
@@ -47,11 +109,22 @@ function getStructuredResultsFromMessage(message: Message): StructuredResultType
     if (invocation.state !== "result") continue;
 
     if (invocation.toolName === "render_structured_chart" || invocation.toolName === "render_custom_chart") {
-      const args = invocation.args;
+      const args = invocation.args as ChartToolArgs | undefined;
       if (!args) continue;
       const payload: ChartPayload = args.mode === "custom"
-        ? { mode: "custom", title: args.title, description: args.description, echartsOption: args.echartsOption }
-        : { mode: "structured", chartType: args.chartType, title: args.title, description: args.description, data: args.data };
+        ? {
+            mode: "custom",
+            title: args.title ?? "",
+            description: args.description,
+            echartsOption: args.echartsOption ?? {},
+          }
+        : {
+            mode: "structured",
+            chartType: args.chartType ?? "",
+            title: args.title ?? "",
+            description: args.description,
+            data: args.data ?? [],
+          };
       results.push({ type: "chart", payload });
       continue;
     }
@@ -60,46 +133,57 @@ function getStructuredResultsFromMessage(message: Message): StructuredResultType
     if (!result) continue;
 
     switch (invocation.toolName) {
-      case "get_balance":
+      case "get_balance": {
+        const r = result as BalanceToolResult;
         results.push({
           type: "balance",
-          balance: result.balance,
-          currency: result.currency,
+          balance: r.balance,
+          currency: r.currency,
         });
         break;
-      case "list_recent_transactions":
+      }
+      case "list_recent_transactions": {
+        const r = result as TransactionsToolResult;
         results.push({
           type: "transactions",
-          items: result.items,
+          items: r.items,
         });
         break;
-      case "summarize_spending":
+      }
+      case "summarize_spending": {
+        const r = result as SpendingToolResult;
         results.push({
           type: "spending",
-          monthLabel: result.monthLabel,
-          total: result.total,
-          topCategory: result.topCategory,
-          comparisonText: result.comparisonText,
+          monthLabel: r.monthLabel,
+          total: r.total,
+          topCategory: r.topCategory,
+          comparisonText: r.comparisonText,
         });
         break;
-      case "execute_transfer":
+      }
+      case "execute_transfer": {
+        const r = result as ConfirmationToolResult;
         results.push({
           type: "status",
           tone: "success",
-          summary: result.confirmationText,
+          summary: r.confirmationText,
         });
         break;
-      case "execute_card_status_change":
+      }
+      case "execute_card_status_change": {
+        const r = result as ConfirmationToolResult;
         results.push({
           type: "status",
           tone: "success",
-          summary: result.confirmationText,
+          summary: r.confirmationText,
         });
         break;
+      }
       case "get_investment_portfolio": {
-        results.push(buildPortfolioSummary(result));
+        const r = result as PortfolioToolResult;
+        results.push(buildPortfolioSummary(r));
         // Also render pre-computed charts from the backend
-        const charts: ChartPayload[] = result.charts || [];
+        const charts: ChartPayload[] = r.charts ?? [];
         for (const chart of charts) {
           results.push({ type: "chart", payload: chart });
         }
@@ -138,10 +222,13 @@ export function ChatMessageList({
     return (
       <div className="flex h-full flex-col items-center justify-center px-6 py-10 animate-fade-in">
         <div className="mb-6 flex flex-col items-center text-center">
-          <img
+          <Image
             src="/logo.svg"
             alt=""
             aria-hidden="true"
+            width={56}
+            height={56}
+            priority
             className="mb-5 h-14 w-14 rounded-[14px] border border-white/10 shadow-[0_16px_38px_rgba(0,0,0,0.28)]"
           />
           <h2 className="text-2xl font-semibold text-white">

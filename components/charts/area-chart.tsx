@@ -1,33 +1,34 @@
 "use client";
 
 import { BaseChart } from "./base-chart";
+import type { ChartDataPoint } from "@/lib/types/chat";
 
-export function AreaChart({ data }: { data: any[] }) {
-  const names = data.map((d) => d.name || d.month || d.date || "");
-  const values = data.map((d) => d.value || d.price || 0);
+export function AreaChart({ data }: { data: ChartDataPoint[] }) {
+  const names = data.map((d) => String(d.name ?? d.month ?? d.date ?? ""));
+  const values = data.map((d) => Number(d.value ?? d.price ?? 0));
 
   const option = {
     xAxis: {
-      type: "category",
+      type: "category" as const,
       data: names,
       axisLine: { lineStyle: { color: "#525252" } },
       axisLabel: { color: "#a3a3a3" },
     },
     yAxis: {
-      type: "value",
+      type: "value" as const,
       axisLine: { lineStyle: { color: "#525252" } },
       axisLabel: { color: "#a3a3a3" },
       splitLine: { lineStyle: { color: "#404040" } },
     },
     series: [
       {
-        type: "line",
+        type: "line" as const,
         data: values,
         smooth: true,
         itemStyle: { color: "#8b5cf6" },
         areaStyle: {
           color: {
-            type: "linear",
+            type: "linear" as const,
             x: 0,
             y: 0,
             x2: 0,

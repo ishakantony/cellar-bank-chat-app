@@ -1,15 +1,16 @@
 "use client";
 
 import { BaseChart } from "./base-chart";
+import type { ChartDataPoint } from "@/lib/types/chat";
 
-export function TreemapChart({ data }: { data: any[] }) {
+export function TreemapChart({ data }: { data: ChartDataPoint[] }) {
   const option = {
     series: [
       {
-        type: "treemap",
+        type: "treemap" as const,
         data: data.map((d) => ({
-          name: d.name || d.label,
-          value: d.value || d.amount || 0,
+          name: String(d.name ?? d.label ?? ""),
+          value: Number(d.value ?? d.amount ?? 0),
         })),
         label: { show: true, color: "#ffffff" },
         itemStyle: {

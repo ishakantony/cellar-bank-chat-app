@@ -1,30 +1,38 @@
 "use client";
 
 import ReactECharts from "echarts-for-react";
+import type { EChartsOption } from "echarts";
 
 interface BaseChartProps {
-  option: any;
+  option: EChartsOption;
+}
+
+function asObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
 }
 
 export function BaseChart({ option }: BaseChartProps) {
-  const themedOption = {
+  const themedOption: EChartsOption = {
     backgroundColor: "transparent",
     textStyle: {
       color: "rgba(255,255,255,0.78)",
     },
     title: {
       textStyle: { color: "#ffffff" },
-      ...option.title,
+      ...asObject(option.title),
     },
     legend: {
       textStyle: { color: "rgba(255,255,255,0.52)" },
-      ...option.legend,
+      ...asObject(option.legend),
     },
     tooltip: {
       backgroundColor: "#152035",
       borderColor: "rgba(255,255,255,0.12)",
       textStyle: { color: "rgba(255,255,255,0.86)" },
-      ...option.tooltip,
+      ...asObject(option.tooltip),
     },
     ...option,
   };

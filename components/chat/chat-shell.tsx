@@ -1,13 +1,37 @@
 "use client";
 
 import { useChat, type Message } from "ai/react";
-import { useEffect, useRef, useCallback, useMemo, useState } from "react";
+import Image from "next/image";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
 import { ChatComposer } from "@/components/chat/chat-composer";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 import type { PendingAction } from "@/lib/types/chat";
 
 const PWA_BUILD_LABEL = "PWA v2";
+
+type TransferPreviewResult = {
+  actionId: string;
+  recipientName: string;
+  amount: number;
+  currency: string;
+  sourceAccountName: string;
+  summary: string;
+};
+
+type CardPreviewResult = {
+  actionId: string;
+  action: "freeze" | "unfreeze";
+  cardLabel: string;
+  summary: string;
+};
 
 function getPendingActionFromToolInvocations(message: Message | undefined): PendingAction | null {
   if (!message || message.role !== "assistant") return null;
@@ -22,24 +46,26 @@ function getPendingActionFromToolInvocations(message: Message | undefined): Pend
     if (!result) continue;
 
     if (invocation.toolName === "create_transfer_preview") {
+      const r = result as TransferPreviewResult;
       return {
-        id: result.actionId,
+        id: r.actionId,
         kind: "transfer" as const,
-        recipientName: result.recipientName,
-        amount: result.amount,
-        currency: result.currency,
-        sourceAccountName: result.sourceAccountName,
-        previewText: result.summary,
+        recipientName: r.recipientName,
+        amount: r.amount,
+        currency: r.currency,
+        sourceAccountName: r.sourceAccountName,
+        previewText: r.summary,
       };
     }
 
     if (invocation.toolName === "create_card_status_preview") {
-      const kind = result.action === "freeze" ? "freeze-card" : "unfreeze-card";
+      const r = result as CardPreviewResult;
+      const kind = r.action === "freeze" ? "freeze-card" : "unfreeze-card";
       return {
-        id: result.actionId,
+        id: r.actionId,
         kind,
-        cardLabel: result.cardLabel,
-        previewText: result.summary,
+        cardLabel: r.cardLabel,
+        previewText: r.summary,
       };
     }
   }
@@ -53,33 +79,40 @@ function hasToolInvocations(message: Message | undefined): boolean {
   return !!toolInvocations && toolInvocations.length > 0;
 }
 
+const STANDALONE_QUERY = "(display-mode: standalone)";
+
+function readStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  const matchMediaStandalone =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia(STANDALONE_QUERY).matches
+      : false;
+  const navigatorStandalone = (window.navigator as Navigator & { standalone?: boolean })
+    .standalone;
+  return matchMediaStandalone || Boolean(navigatorStandalone);
+}
+
+function subscribeToStandalone(onChange: () => void): () => void {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return () => {};
+  }
+  const query = window.matchMedia(STANDALONE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
 export function ChatShell() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append, setInput } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
     api: "/api/chat",
   });
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const isStandalone = useSyncExternalStore(
+    subscribeToStandalone,
+    readStandalone,
+    () => false
+  );
   const [messageSuggestions, setMessageSuggestions] = useState<Record<string, string[]>>({});
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") {
-      setIsStandalone(Boolean((window.navigator as any).standalone));
-      return;
-    }
-
-    const standaloneQuery = window.matchMedia("(display-mode: standalone)");
-    const updateStandaloneMode = () => {
-      setIsStandalone(standaloneQuery.matches || Boolean((window.navigator as any).standalone));
-    };
-
-    updateStandaloneMode();
-    standaloneQuery.addEventListener("change", updateStandaloneMode);
-
-    return () => {
-      standaloneQuery.removeEventListener("change", updateStandaloneMode);
-    };
-  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -163,10 +196,13 @@ export function ChatShell() {
       {/* App Header */}
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-chat-surface/92 px-4 shadow-[0_12px_30px_rgba(0,0,0,0.22)] backdrop-blur-md">
         <div className="flex items-center gap-2.5">
-          <img
+          <Image
             src="/logo.svg"
             alt=""
             aria-hidden="true"
+            width={32}
+            height={32}
+            priority
             className="h-8 w-8 rounded-[8px] border border-white/10 shadow-[0_8px_22px_rgba(0,0,0,0.24)]"
           />
           <span className="text-base font-semibold tracking-tight text-white">Cellar Bank</span>

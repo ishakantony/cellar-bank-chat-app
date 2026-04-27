@@ -7,19 +7,21 @@ export type StructuredResultType =
   | "chart"
   | "portfolio";
 
+export type ChartDataPoint = Record<string, string | number | undefined>;
+
 export type ChartPayload =
   | {
       mode: "structured";
       chartType: string;
       title: string;
       description?: string;
-      data: Array<Record<string, any>>;
+      data: ChartDataPoint[];
     }
   | {
       mode: "custom";
       title: string;
       description?: string;
-      echartsOption: Record<string, any>;
+      echartsOption: Record<string, unknown>;
     };
 
 export type PortfolioSummary = {

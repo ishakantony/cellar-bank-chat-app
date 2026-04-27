@@ -1,23 +1,12 @@
 "use client";
 
 import ReactMarkdown from "react-markdown";
-import { useState, useEffect } from "react";
 
 interface MarkdownTextProps {
   content: string;
 }
 
 export function MarkdownText({ content }: MarkdownTextProps) {
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    setHasError(false);
-  }, [content]);
-
-  if (hasError) {
-    return <p className="whitespace-pre-wrap">{content}</p>;
-  }
-
   return (
     <div className="markdown-text">
       <ReactMarkdown

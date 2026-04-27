@@ -1,13 +1,14 @@
 "use client";
 
 import { BaseChart } from "./base-chart";
+import type { ChartDataPoint } from "@/lib/types/chat";
 
-export function RadarChart({ data }: { data: any[] }) {
-  const values = data.map((d) => d.value || d.amount || 0);
+export function RadarChart({ data }: { data: ChartDataPoint[] }) {
+  const values = data.map((d) => Number(d.value ?? d.amount ?? 0));
   const maxValue = Math.max(...values, 1) * 1.2;
 
   const indicators = data.map((d) => ({
-    name: d.name || d.label || "",
+    name: String(d.name ?? d.label ?? ""),
     max: maxValue,
   }));
 
@@ -21,7 +22,7 @@ export function RadarChart({ data }: { data: any[] }) {
     },
     series: [
       {
-        type: "radar",
+        type: "radar" as const,
         data: [
           {
             value: values,

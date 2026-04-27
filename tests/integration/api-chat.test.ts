@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const mockStreamAIResponse = vi.fn();
 
 vi.mock("@/lib/ai/ai-client", () => ({
-  streamAIResponse: (...args: any[]) => mockStreamAIResponse(...args),
+  streamAIResponse: (...args: unknown[]) => mockStreamAIResponse(...args),
 }));
 
 import { POST } from "@/app/api/chat/route";

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
+import type { Message } from "ai/react";
 import { ChatMessageList } from "@/components/chat/chat-message-list";
 
 describe("ChatMessageList with charts", () => {
@@ -25,7 +26,7 @@ describe("ChatMessageList with charts", () => {
       },
     ];
 
-    render(<ChatMessageList messages={messages as any} onSelectPrompt={() => {}} />);
+    render(<ChatMessageList messages={messages as unknown as Message[]} onSelectPrompt={() => {}} />);
     expect(screen.getByText("Sector Allocation")).toBeInTheDocument();
   });
 
@@ -52,7 +53,7 @@ describe("ChatMessageList with charts", () => {
       },
     ];
 
-    render(<ChatMessageList messages={messages as any} onSelectPrompt={() => {}} />);
+    render(<ChatMessageList messages={messages as unknown as Message[]} onSelectPrompt={() => {}} />);
     expect(screen.getByText("Investment Portfolio")).toBeInTheDocument();
     expect(screen.getByText(/Malayan Banking Bhd/i)).toBeInTheDocument();
   });
@@ -74,7 +75,7 @@ describe("ChatMessageList with charts", () => {
       },
     ];
 
-    render(<ChatMessageList messages={messages as any} isLoading onSelectPrompt={() => {}} />);
+    render(<ChatMessageList messages={messages as unknown as Message[]} isLoading onSelectPrompt={() => {}} />);
     // Text should be visible
     expect(screen.getByText("Your balance is")).toBeInTheDocument();
     // But balance card should NOT appear yet
@@ -98,7 +99,7 @@ describe("ChatMessageList with charts", () => {
       },
     ];
 
-    render(<ChatMessageList messages={messages as any} isLoading={false} onSelectPrompt={() => {}} />);
+    render(<ChatMessageList messages={messages as unknown as Message[]} isLoading={false} onSelectPrompt={() => {}} />);
     expect(screen.getByText("Your balance is")).toBeInTheDocument();
     expect(screen.getByText("Balance")).toBeInTheDocument();
   });
@@ -120,7 +121,7 @@ describe("ChatMessageList with charts", () => {
       },
     ];
 
-    render(<ChatMessageList messages={messages as any} isLoading onSelectPrompt={() => {}} />);
+    render(<ChatMessageList messages={messages as unknown as Message[]} isLoading onSelectPrompt={() => {}} />);
     // Thinking indicator should be visible
     expect(screen.getByText("Thinking")).toBeInTheDocument();
     // Balance card should NOT appear yet (no content yet)

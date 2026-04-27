@@ -4,7 +4,7 @@ import { useState } from "react";
 
 interface ChartFallbackProps {
   title?: string;
-  rawData?: any;
+  rawData?: unknown;
 }
 
 export function ChartFallback({ title, rawData }: ChartFallbackProps) {
