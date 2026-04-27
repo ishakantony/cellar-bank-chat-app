@@ -11,11 +11,7 @@ const PWA_BUILD_LABEL = "PWA v2";
 
 function getPendingActionFromToolInvocations(message: Message | undefined): PendingAction | null {
   if (!message || message.role !== "assistant") return null;
-  const toolInvocations = (message as any).toolInvocations as Array<{
-    toolName: string;
-    state: "call" | "result";
-    result?: any;
-  }> | undefined;
+  const toolInvocations = message.toolInvocations;
 
   if (!toolInvocations) return null;
 
@@ -53,7 +49,7 @@ function getPendingActionFromToolInvocations(message: Message | undefined): Pend
 
 function hasToolInvocations(message: Message | undefined): boolean {
   if (!message || message.role !== "assistant") return false;
-  const toolInvocations = (message as any).toolInvocations as Array<any> | undefined;
+  const toolInvocations = message.toolInvocations;
   return !!toolInvocations && toolInvocations.length > 0;
 }
 
@@ -107,7 +103,12 @@ export function ChatShell() {
           body: JSON.stringify({ messages }),
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (process.env.NODE_ENV !== "production") {
+            console.error(`Suggestion fetch returned ${response.status}`);
+          }
+          return;
+        }
 
         const data = await response.json();
         if (!Array.isArray(data.suggestions)) return;
@@ -125,8 +126,10 @@ export function ChatShell() {
           ...prev,
           [lastAssistant!.id]: filtered.slice(0, 3),
         }));
-      } catch {
-        // Silently ignore suggestion fetch failures
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Suggestion fetch failed:", error);
+        }
       }
     }
 

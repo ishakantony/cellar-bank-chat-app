@@ -37,12 +37,7 @@ function buildPortfolioSummary(result: any): StructuredResultType {
 }
 
 function getStructuredResultsFromMessage(message: Message): StructuredResultType[] {
-  const toolInvocations = (message as any).toolInvocations as Array<{
-    toolName: string;
-    state: "call" | "result";
-    args?: any;
-    result?: any;
-  }> | undefined;
+  const toolInvocations = message.toolInvocations;
 
   if (!toolInvocations) return [];
 
@@ -169,7 +164,14 @@ export function ChatMessageList({
   }
 
   return (
-    <div ref={scrollRef} className="flex flex-col justify-end space-y-4 px-4 py-6">
+    <div
+      ref={scrollRef}
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="Conversation"
+      className="flex flex-col justify-end space-y-4 px-4 py-6"
+    >
       {messages.map((msg, index) => {
         const structuredResults = msg.role === "assistant" ? getStructuredResultsFromMessage(msg) : [];
         const hasContent = msg.content && msg.content.trim().length > 0;
@@ -244,11 +246,11 @@ export function ChatMessageList({
           (lastMsg?.role === "assistant" && !lastMsg.content?.trim());
         if (!isThinking) return null;
         return (
-          <div className="flex animate-message-in justify-start">
+          <div className="flex animate-message-in justify-start" role="status" aria-live="polite">
             <div className="max-w-[85%] rounded-[18px] rounded-tl-md border border-white/10 bg-chat-elevated px-4 py-3 text-[15px] leading-relaxed text-white/90 shadow-[0_12px_34px_rgba(0,0,0,0.22)]">
               <span className="inline-flex items-center gap-1">
                 <span className="animate-thinking-pulse">Thinking</span>
-                <span className="inline-flex">
+                <span className="inline-flex" aria-hidden="true">
                   <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "0ms" }}>.</span>
                   <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "150ms" }}>.</span>
                   <span className="animate-thinking-dot text-lg leading-none" style={{ animationDelay: "300ms" }}>.</span>

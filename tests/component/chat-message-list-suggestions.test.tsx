@@ -20,7 +20,7 @@ describe("ChatMessageList with inline suggestions", () => {
       role: "assistant",
       content: "Your balance is $5,000.",
       toolInvocations: [
-        { toolName: "get_balance", state: "result", result: { balance: 5000, currency: "MYR" } },
+        { toolCallId: "call-1", toolName: "get_balance", args: {}, state: "result", result: { balance: 5000, currency: "MYR" } },
       ],
     });
 
@@ -68,7 +68,7 @@ describe("ChatMessageList with inline suggestions", () => {
       role: "assistant",
       content: "Your balance is $5,000.",
       toolInvocations: [
-        { toolName: "get_balance", state: "result", result: { balance: 5000, currency: "MYR" } },
+        { toolCallId: "call-1", toolName: "get_balance", args: {}, state: "result", result: { balance: 5000, currency: "MYR" } },
       ],
     });
 

@@ -2,6 +2,9 @@
   "name": "ai-banking-app",
   "private": true,
   "scripts": {
+    "build:sw": "node scripts/build-sw.mjs",
+    "predev": "node scripts/build-sw.mjs",
+    "prebuild": "node scripts/build-sw.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

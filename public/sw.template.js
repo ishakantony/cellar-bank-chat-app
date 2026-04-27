@@ -1,4 +1,4 @@
-const STATIC_CACHE = "cellar-bank-static-v2";
+const STATIC_CACHE = "cellar-bank-__BUILD_HASH__";
 
 const APP_SHELL_URLS = [
   "/",
